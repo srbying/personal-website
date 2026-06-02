@@ -3,3 +3,6 @@ CONTEXT.md
 */launch-prd.md
 
 .DS_Store
+.astro/
+dist/
+node_modules/
