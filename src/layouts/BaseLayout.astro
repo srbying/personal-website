@@ -1,0 +1,90 @@
+---
+import LaunchNavigation from "../components/LaunchNavigation.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import { siteMetadata } from "../data/site";
+import "../styles/global.css";
+
+type Props = {
+  title?: string;
+  description?: string;
+};
+
+const {
+  title = siteMetadata.name,
+  description = siteMetadata.description
+} = Astro.props;
+
+const pageTitle =
+  title === siteMetadata.name
+    ? siteMetadata.name
+    : siteMetadata.titleTemplate.replace("%s", title);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="author" content={siteMetadata.author} />
+    <meta property="og:locale" content={siteMetadata.locale} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <title>{pageTitle}</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content" data-skip-link>Skip to content</a>
+    <div class="site-shell">
+      <LaunchNavigation />
+      <main id="main-content" class="site-main" tabindex="-1" data-main-content>
+        <slot />
+      </main>
+      <SiteFooter />
+    </div>
+    <script>
+      const setupSkipLink = () => {
+        const skipLink = document.querySelector("[data-skip-link]");
+        const mainContent = document.querySelector("[data-main-content]");
+
+        if (
+          !(skipLink instanceof HTMLAnchorElement) ||
+          !(mainContent instanceof HTMLElement) ||
+          skipLink.dataset.skipReady === "true"
+        ) {
+          return;
+        }
+
+        skipLink.dataset.skipReady = "true";
+
+        const activateSkipLink = () => {
+          mainContent.focus({ preventScroll: true });
+          mainContent.scrollIntoView({ block: "start" });
+
+          if (window.location.hash !== "#main-content") {
+            history.pushState(null, "", "#main-content");
+          }
+        };
+
+        skipLink.addEventListener("click", (event) => {
+          event.preventDefault();
+          activateSkipLink();
+        });
+
+        skipLink.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            activateSkipLink();
+          }
+        });
+      };
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", setupSkipLink, { once: true });
+      } else {
+        setupSkipLink();
+      }
+
+      document.addEventListener("astro:page-load", setupSkipLink);
+    </script>
+  </body>
+</html>

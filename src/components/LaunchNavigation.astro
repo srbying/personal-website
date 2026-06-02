@@ -1,0 +1,145 @@
+---
+import { launchNavigation, siteMetadata } from "../data/site";
+---
+
+<header class="site-header" data-launch-navigation data-menu-state="closed">
+  <a class="brand-link" href="/" aria-label={`${siteMetadata.name} home`}>
+    <span class="brand-mark" aria-hidden="true">SB</span>
+    <span class="brand-name">{siteMetadata.name}</span>
+  </a>
+
+  <nav class="desktop-navigation" aria-label="Launch navigation">
+    {
+      launchNavigation.map((item) => (
+        <a
+          class:list={[
+            "navigation-link",
+            { "navigation-link--highlight": item.isHighlighted }
+          ]}
+          href={item.href}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <button
+    class="mobile-navigation-toggle"
+    type="button"
+    aria-label="Open navigation"
+    aria-expanded="false"
+    aria-controls="mobile-navigation"
+    data-nav-toggle
+  >
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+    <span aria-hidden="true"></span>
+  </button>
+
+  <nav
+    id="mobile-navigation"
+    class="mobile-navigation"
+    aria-label="Mobile launch navigation"
+    data-open="false"
+    hidden
+  >
+    {
+      launchNavigation.map((item) => (
+        <a
+          class:list={[
+            "mobile-navigation-link",
+            { "mobile-navigation-link--highlight": item.isHighlighted }
+          ]}
+          href={item.href}
+        >
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+</header>
+
+<script>
+  const setupLaunchNavigation = () => {
+    const header = document.querySelector("[data-launch-navigation]");
+
+    if (!(header instanceof HTMLElement) || header.dataset.navigationReady === "true") {
+      return;
+    }
+
+    header.dataset.navigationReady = "true";
+
+    const toggle = header.querySelector("[data-nav-toggle]");
+    const panel = header.querySelector("#mobile-navigation");
+
+    if (!(toggle instanceof HTMLButtonElement) || !(panel instanceof HTMLElement)) {
+      return;
+    }
+
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const desktopQuery = window.matchMedia("(min-width: 760px)");
+    const panelLinks = Array.from(panel.querySelectorAll("a"));
+
+    const setOpen = (isOpen) => {
+      toggle.setAttribute("aria-expanded", String(isOpen));
+      toggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+      header.dataset.menuState = isOpen ? "open" : "closed";
+
+      if (isOpen) {
+        panel.hidden = false;
+
+        if (reducedMotionQuery.matches) {
+          panel.dataset.open = "true";
+          return;
+        }
+
+        requestAnimationFrame(() => {
+          panel.dataset.open = "true";
+        });
+        return;
+      }
+
+      panel.dataset.open = "false";
+
+      if (reducedMotionQuery.matches) {
+        panel.hidden = true;
+        return;
+      }
+
+      const hidePanel = () => {
+        if (panel.dataset.open !== "true") {
+          panel.hidden = true;
+        }
+        panel.removeEventListener("transitionend", hidePanel);
+      };
+
+      panel.addEventListener("transitionend", hidePanel);
+      window.setTimeout(hidePanel, 260);
+    };
+
+    setOpen(false);
+
+    toggle.addEventListener("click", () => {
+      setOpen(toggle.getAttribute("aria-expanded") !== "true");
+    });
+
+    panelLinks.forEach((link) => {
+      link.addEventListener("click", () => setOpen(false));
+    });
+
+    desktopQuery.addEventListener("change", (event) => {
+      if (event.matches) {
+        setOpen(false);
+      }
+    });
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupLaunchNavigation, { once: true });
+  } else {
+    setupLaunchNavigation();
+  }
+
+  document.addEventListener("astro:page-load", setupLaunchNavigation);
+</script>
