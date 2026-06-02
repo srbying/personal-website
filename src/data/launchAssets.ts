@@ -14,7 +14,7 @@ export type LaunchAsset = {
 
 export type PublicLink = {
   label: string;
-  href: string;
+  href?: string;
   displayText?: string;
   isExternal: boolean;
   isConfirmed: boolean;
@@ -22,6 +22,12 @@ export type PublicLink = {
 };
 
 export const reviewDate = "2026-06-02";
+
+export function hasConfirmedHref(
+  link: PublicLink
+): link is PublicLink & { href: string } {
+  return link.isConfirmed && typeof link.href === "string" && link.href.length > 0;
+}
 
 export const resumePdf = {
   label: "Steven Byington Resume PDF",
@@ -86,6 +92,17 @@ export const brandAssets = {
     width: 1120,
     height: 370
   },
+  logoLockupCream: {
+    label: "Steven Byington primary logo lockup cream crop",
+    path: "/assets/brand/logo-lockup-cream.png",
+    format: "png",
+    role: "Open Graph source dependency",
+    reviewStatus: "approved",
+    reviewNotes:
+      "Cream-background crop used by the editable Open Graph SVG source.",
+    width: 1120,
+    height: 370
+  },
   logoSystem: {
     label: "Steven Byington logo system sheet",
     path: "/assets/brand/logo-system.png",
@@ -118,6 +135,20 @@ export const brandAssets = {
     height: 630
   }
 } satisfies Record<string, LaunchAsset>;
+
+export const launchHeadAssets = {
+  openGraph: {
+    image: {
+      path: brandAssets.openGraph.path,
+      width: brandAssets.openGraph.width,
+      height: brandAssets.openGraph.height
+    }
+  },
+  icons: {
+    favicon: brandAssets.favicon.path,
+    appleTouchIcon: brandAssets.appleTouchIcon.path
+  }
+} as const;
 
 export const heroLandscape = {
   label: "Hero Landscape",
@@ -200,9 +231,7 @@ export const projectLinks = {
     },
     github: {
       label: "Soilos GitHub",
-      href: "https://github.com/srbying/soilOS",
-      displayText: "github.com/srbying/soilOS",
-      isExternal: true,
+      isExternal: false,
       isConfirmed: false,
       reviewNotes:
         "Repository exists but is private, so it must not be linked publicly at launch."
