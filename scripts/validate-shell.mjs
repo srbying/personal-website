@@ -52,6 +52,10 @@ assert(packageJson.scripts?.build === "astro build", "Expected npm run build to 
 assert(packageJson.scripts?.preview === "astro preview", "Expected npm run preview to execute astro preview");
 assert(Boolean(packageJson.dependencies?.astro), "Expected Astro dependency");
 assert(Boolean(packageJson.devDependencies?.typescript), "Expected TypeScript dev dependency");
+assert(
+  packageJson.engines?.node === ">=22.12.0",
+  "Expected package.json to declare the Node runtime required by Astro 6"
+);
 
 const astroConfig = await readProjectFile("astro.config.mjs");
 assert(astroConfig.includes("defineConfig"), "Expected Astro defineConfig usage");
@@ -89,6 +93,14 @@ assert(navigation.includes("aria-expanded=\"false\""), "Expected accessible mobi
 assert(navigation.includes("aria-controls=\"mobile-navigation\""), "Expected mobile menu controls relationship");
 assert(navigation.includes("prefers-reduced-motion: reduce"), "Expected reduced-motion-aware menu behavior");
 assert(navigation.includes("astro:page-load"), "Expected mobile menu script to rebind after Astro page loads");
+assert(
+  navigation.includes('window.matchMedia("(min-width: 841px)")'),
+  "Expected desktop JS breakpoint to match the CSS max-width: 840px breakpoint"
+);
+assert(
+  navigation.includes("handleDesktopQueryChange(desktopQuery)"),
+  "Expected desktop media query handler to run once on initialization"
+);
 
 const notFound = await readProjectFile("src/pages/404.astro");
 assert(

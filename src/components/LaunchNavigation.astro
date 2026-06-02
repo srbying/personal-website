@@ -78,7 +78,7 @@ import { launchNavigation, siteMetadata } from "../data/site";
     }
 
     const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const desktopQuery = window.matchMedia("(min-width: 760px)");
+    const desktopQuery = window.matchMedia("(min-width: 841px)");
     const panelLinks = Array.from(panel.querySelectorAll("a"));
 
     const setOpen = (isOpen) => {
@@ -128,11 +128,14 @@ import { launchNavigation, siteMetadata } from "../data/site";
       link.addEventListener("click", () => setOpen(false));
     });
 
-    desktopQuery.addEventListener("change", (event) => {
+    const handleDesktopQueryChange = (event) => {
       if (event.matches) {
         setOpen(false);
       }
-    });
+    };
+
+    handleDesktopQueryChange(desktopQuery);
+    desktopQuery.addEventListener("change", handleDesktopQueryChange);
   };
 
   if (document.readyState === "loading") {
