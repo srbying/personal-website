@@ -1,11 +1,26 @@
 ---
+import { brandAssets } from "../data/launchAssets";
 import { launchNavigation, siteMetadata } from "../data/site";
 ---
 
 <header class="site-header" data-launch-navigation data-menu-state="closed">
   <a class="brand-link" href="/" aria-label={`${siteMetadata.name} home`}>
-    <span class="brand-mark" aria-hidden="true">SB</span>
-    <span class="brand-name">{siteMetadata.name}</span>
+    <img
+      class="brand-wordmark"
+      src={brandAssets.desktopHeader.path}
+      alt=""
+      width={brandAssets.desktopHeader.width}
+      height={brandAssets.desktopHeader.height}
+      decoding="async"
+    />
+    <img
+      class="brand-icon"
+      src={brandAssets.compactIcon.path}
+      alt=""
+      width={brandAssets.compactIcon.width}
+      height={brandAssets.compactIcon.height}
+      decoding="async"
+    />
   </a>
 
   <nav class="desktop-navigation" aria-label="Launch navigation">

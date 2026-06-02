@@ -17,5 +17,6 @@ export type ExperienceContent = {
 
 export const contentSources = {
   projects: "src/data/projects.json",
-  experience: "src/data/experience.json"
+  experience: "src/data/experience.json",
+  launchAssets: "src/data/launchAssets.ts"
 } as const;
