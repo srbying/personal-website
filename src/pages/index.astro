@@ -1,18 +1,35 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { heroLandscape, resumePdf } from "../data/launchAssets";
 ---
 
 <BaseLayout title="Home">
   <section class="hero-section">
+    <picture class="hero-section__media">
+      <source srcset={heroLandscape.path} type="image/webp" />
+      <img
+        src={heroLandscape.fallbackPath}
+        alt={heroLandscape.alt}
+        width={heroLandscape.width}
+        height={heroLandscape.height}
+        loading="eager"
+        decoding="async"
+      />
+    </picture>
     <div class="hero-section__content">
+      <p class="hero-kicker">Engineering Manager</p>
       <h1>Steven Byington</h1>
       <p>
-        A focused portfolio for experience, selected projects, resume details,
-        and clear ways to get in touch.
+        Engineering Manager with 10+ years of full-stack experience. I help
+        product-minded teams build with clarity, ownership, and technical
+        judgment.
       </p>
+      <p class="hero-proof">Engineering Manager &middot; Full-Stack Depth &middot; USMC Veteran</p>
       <div class="hero-actions" aria-label="Primary links">
-        <a class="button-link button-link--primary" href="/resume/">Resume</a>
-        <a class="button-link" href="/contact/">Contact</a>
+        <a class="button-link button-link--primary" href={resumePdf.path}>
+          Download My Resume
+        </a>
+        <a class="button-link" href="/experience/">See My Experience</a>
       </div>
     </div>
   </section>

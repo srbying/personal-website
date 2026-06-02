@@ -1,15 +1,65 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { projectLinks, projectScreenshots } from "../data/launchAssets";
+
+const projects = [
+  {
+    title: "Aeris",
+    summary:
+      "A personal fitness analytics tool that turns workout data into trends, comparisons, and progress insights.",
+    screenshots: projectScreenshots.aeris,
+    links: [projectLinks.aeris.liveApp, projectLinks.aeris.github]
+  },
+  {
+    title: "Soilos",
+    summary:
+      "A personal lawn-care planning app framed through market research, seasonal planning, budget tracking, and product thinking.",
+    screenshots: projectScreenshots.soilos,
+    links: []
+  }
+];
 ---
 
 <BaseLayout
   title="Projects"
   description="Selected projects by Steven Byington."
 >
-  <section class="page-section">
+  <section class="page-section projects-section">
     <h1>Projects</h1>
     <p>
-      Selected project entries will build from this route in a future slice.
+      A small set of personal tools and experiments built to solve real
+      problems, explore product ideas, and deepen technical judgment.
     </p>
+    <div class="project-list">
+      {
+        projects.map((project) => (
+          <article class="project-entry">
+            <div class="project-entry__content">
+              <h2>{project.title}</h2>
+              <p>{project.summary}</p>
+              {
+                project.links.length > 0 && (
+                  <nav class="project-links" aria-label={`${project.title} links`}>
+                    {project.links.map((link) => (
+                      <a href={link.href} target="_blank" rel="noreferrer">
+                        {link.label}
+                      </a>
+                    ))}
+                  </nav>
+                )
+              }
+            </div>
+            <figure class="project-entry__media">
+              <img
+                src={project.screenshots[0].path}
+                alt={project.screenshots[0].alt}
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
+          </article>
+        ))
+      }
+    </div>
   </section>
 </BaseLayout>
