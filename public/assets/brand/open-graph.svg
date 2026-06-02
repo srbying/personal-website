@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">Steven Byington Open Graph image</title>
+  <desc id="desc">Social preview image using Steven Byington's primary logo lockup.</desc>
+  <rect width="1200" height="630" fill="#F7F2E6" />
+  <path d="M0 530c190-54 360-67 585-38 190 24 340 7 615-88v226H0z" fill="#EADFC9" />
+  <path d="M78 510c180-44 344-48 540-17 188 30 346 18 505-45" fill="none" stroke="#D26A2E" stroke-width="12" stroke-linecap="round" opacity="0.8" />
+  <image href="logo-lockup-cream.png" x="90" y="76" width="980" height="324" preserveAspectRatio="xMidYMid meet" />
+  <text x="88" y="548" fill="#1F3B2E" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700" letter-spacing="0">Product-minded teams. Full-stack depth.</text>
+</svg>

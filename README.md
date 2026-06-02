@@ -8,3 +8,4 @@ A personal portfolio website, focused on presenting my resume, experience, selec
 - `npm run build` creates the production static build.
 - `npm run preview` serves the built site locally.
 - `npm run test:acceptance` checks the launch shell acceptance criteria.
+- `npm run test:assets` checks the launch asset manifest and public asset paths.

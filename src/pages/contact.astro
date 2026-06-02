@@ -1,16 +1,43 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { contactLinks } from "../data/launchAssets";
+
+const orderedContactLinks = [
+  contactLinks.email,
+  contactLinks.linkedIn,
+  contactLinks.github,
+  contactLinks.resumePdf
+];
 ---
 
 <BaseLayout
   title="Contact"
   description="Contact links for Steven Byington."
 >
-  <section class="page-section">
+  <section class="page-section contact-section">
     <h1>Contact</h1>
     <p>
-      Contact details will build from this route, with email and social links
-      already centralized in the footer data.
+      Direct contact paths for email, professional profile, code profile, and
+      the standard resume artifact.
     </p>
+    <dl class="contact-list">
+      {
+        orderedContactLinks.map((link) => (
+          <div class="contact-list__item">
+            <dt>{link.label}</dt>
+            <dd>
+              <a
+                href={link.href}
+                target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
+                rel={link.isExternal && !link.href.startsWith("mailto:") ? "noreferrer" : undefined}
+                download={!link.isExternal && link.href.endsWith(".pdf") ? true : undefined}
+              >
+                {link.displayText}
+              </a>
+            </dd>
+          </div>
+        ))
+      }
+    </dl>
   </section>
 </BaseLayout>
