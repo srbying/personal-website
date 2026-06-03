@@ -13,7 +13,8 @@
     "test:resume": "node scripts/validate-resume.mjs",
     "test:experience": "node scripts/validate-experience.mjs",
     "test:contact": "node scripts/validate-contact.mjs",
-    "test:projects": "node scripts/validate-projects.mjs"
+    "test:projects": "node scripts/validate-projects.mjs",
+    "test:seo": "node scripts/validate-seo.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

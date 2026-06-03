@@ -7,17 +7,28 @@ import "../styles/global.css";
 type Props = {
   title?: string;
   description?: string;
+  canonicalPath?: string;
+  structuredData?: unknown;
+  robots?: string;
 };
 
 const {
   title = siteMetadata.name,
-  description = siteMetadata.description
+  description = siteMetadata.description,
+  canonicalPath = Astro.url.pathname,
+  structuredData,
+  robots
 } = Astro.props;
 
 const pageTitle =
-  title === siteMetadata.name
-    ? siteMetadata.name
+  title.includes(siteMetadata.name)
+    ? title
     : siteMetadata.titleTemplate.replace("%s", title);
+const canonicalUrl = siteMetadata.toAbsoluteUrl(canonicalPath);
+const openGraphImageUrl = siteMetadata.toAbsoluteUrl(siteMetadata.defaultOpenGraphImage);
+const structuredDataJson = structuredData
+  ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
+  : undefined;
 ---
 
 <!doctype html>
@@ -27,15 +38,25 @@ const pageTitle =
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="author" content={siteMetadata.author} />
+    {robots && <meta name="robots" content={robots} />}
+    <link rel="canonical" href={canonicalUrl} />
     <meta property="og:locale" content={siteMetadata.locale} />
+    <meta property="og:site_name" content={siteMetadata.siteName} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content={siteMetadata.defaultOpenGraphImage} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={openGraphImageUrl} />
+    <meta property="og:image:alt" content={siteMetadata.defaultOpenGraphImageAlt} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png" />
+    {
+      structuredDataJson && (
+        <script type="application/ld+json" set:html={structuredDataJson} />
+      )
+    }
     <title>{pageTitle}</title>
   </head>
   <body>

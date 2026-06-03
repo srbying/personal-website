@@ -7,9 +7,15 @@ import {
   leadershipPrinciples,
   recentExperience
 } from "../data/home";
+import { structuredIdentityMetadata } from "../data/site";
 ---
 
-<BaseLayout title="Home">
+<BaseLayout
+  title="Steven Byington | Software Engineering Manager"
+  description="Software Engineering Manager with full-stack depth, product-minded leadership, and a USMC leadership foundation."
+  canonicalPath="/"
+  structuredData={structuredIdentityMetadata}
+>
   <section class="hero-section">
     <picture class="hero-section__media">
       <source srcset={heroLandscape.path} type="image/webp" />
