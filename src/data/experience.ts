@@ -70,7 +70,7 @@ export const experienceRoles = [
       "Developed a newly promoted senior engineer as a leadership point person, creating space for her to build management judgment while still driving team outcomes.",
       "Diagnosed the slow database queries flooding on-call alerting, advocated for a fix, and implemented it, improving query latency from 1m 25s to 5ms while reducing database strain.",
       "Led a payment fraud mitigation initiative across WAF configuration, Braintree fraud rules, Datadog monitors, historical fraud attempts, chargebacks, third-party tooling, SMS 2FA, and email verification options.",
-      "Analyzed Jira and GitHub workflow data to address pull request bottlenecks, then created a department-wide review process guide with SLA's and alignment sessions.",
+      "Analyzed Jira and GitHub workflow data to address pull request bottlenecks, then created a department-wide review process guide with SLAs and alignment sessions.",
       "Built a weighted backlog scoring worksheet using risk, complexity, deadlines, and cost to improve leadership planning and surface overlooked risks such as compliance-critical Ruby upgrades.",
       "Navigated a critical Kubernetes end-of-life infrastructure risk by clearing roadmap space for the strongest infrastructure engineer, protecting focus, and securing leadership support for a dedicated infrastructure hire."
     ],
@@ -131,7 +131,7 @@ export const experienceRoles = [
     summary:
       "Delivered API, offline resilience, export, and documentation work for client-facing software projects.",
     impacts: [
-      "Built a Node.js and Swagger RESTful API, including service workers to defer post requests for improved offline resilience.",
+      "Built a Node.js and Swagger RESTful API, including service workers to defer POST requests for improved offline resilience.",
       "Created a data export service supporting PDF and CSV output and authored front-end documentation using ESDoc."
     ],
     technologies: ["Node.js", "Swagger", "Service workers", "PDF", "CSV", "ESDoc"]

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import ts from "typescript";
 
 const root = process.cwd();
 
@@ -24,24 +25,6 @@ const ctaExpectations = [
   { label: "Download My Resume", href: "resumePdf.path" },
   { label: "See My Experience", href: "/experience/" },
   { label: "Contact Steven", href: "/contact/" }
-];
-
-const recentExperience = [
-  {
-    company: "Animoto",
-    role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021 - Present"
-  },
-  {
-    company: "Nike",
-    role: "Full Stack Engineer",
-    dateRange: "Feb 2018 - Mar 2021"
-  },
-  {
-    company: "DiscoverOrg (now ZoomInfo)",
-    role: "Software Developer",
-    dateRange: "Nov 2016 - Feb 2018"
-  }
 ];
 
 const leadershipPrinciples = [
@@ -71,6 +54,81 @@ function assert(condition, message) {
   }
 }
 
+function unwrapExpression(expression) {
+  if (
+    ts.isSatisfiesExpression(expression) ||
+    ts.isAsExpression(expression) ||
+    ts.isTypeAssertionExpression(expression)
+  ) {
+    return unwrapExpression(expression.expression);
+  }
+
+  return expression;
+}
+
+function getStringProperty(objectExpression, propertyName) {
+  const property = objectExpression.properties.find(
+    (candidate) =>
+      ts.isPropertyAssignment(candidate) &&
+      ts.isIdentifier(candidate.name) &&
+      candidate.name.text === propertyName
+  );
+
+  assert(property, `experiencePreview item missing ${propertyName}`);
+  assert(
+    ts.isStringLiteral(property.initializer),
+    `experiencePreview ${propertyName} must be a string literal`
+  );
+
+  return property.initializer.text;
+}
+
+function extractExperiencePreview(experienceSource) {
+  const sourceFile = ts.createSourceFile(
+    experienceDataPath,
+    experienceSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS
+  );
+  let initializer;
+
+  function visit(node) {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === "experiencePreview"
+    ) {
+      initializer = node.initializer;
+      return;
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  assert(initializer, "Missing canonical experiencePreview export");
+
+  const arrayExpression = unwrapExpression(initializer);
+  assert(
+    ts.isArrayLiteralExpression(arrayExpression),
+    "experiencePreview must be an array literal"
+  );
+
+  return arrayExpression.elements.map((element) => {
+    assert(
+      ts.isObjectLiteralExpression(element),
+      "experiencePreview entries must be object literals"
+    );
+
+    return {
+      company: getStringProperty(element, "company"),
+      role: getStringProperty(element, "role"),
+      dateRange: getStringProperty(element, "dateRange")
+    };
+  });
+}
+
 assert(existsSync(path.join(root, homeDataPath)), `Missing ${homeDataPath}`);
 assert(existsSync(path.join(root, homePagePath)), `Missing ${homePagePath}`);
 assert(existsSync(path.join(root, experienceDataPath)), `Missing ${experienceDataPath}`);
@@ -83,6 +141,7 @@ const [homeData, homePage, experienceData, packageJsonSource] = await Promise.al
 ]);
 
 const packageJson = JSON.parse(packageJsonSource);
+const experiencePreview = extractExperiencePreview(experienceData);
 
 assert(
   packageJson.scripts?.["test:home"] === "node scripts/validate-home.mjs",
@@ -114,7 +173,9 @@ for (const { label, href } of ctaExpectations) {
   assert(homeData.includes(href), `Missing CTA href in ${homeDataPath}: ${href}`);
 }
 
-for (const { company, role, dateRange } of recentExperience) {
+assert(experiencePreview.length > 0, "Expected canonical experiencePreview items");
+
+for (const { company, role, dateRange } of experiencePreview) {
   assert(experienceData.includes(company), `Missing recent experience company: ${company}`);
   assert(experienceData.includes(role), `Missing recent experience role: ${role}`);
   assert(experienceData.includes(dateRange), `Missing recent experience dates: ${dateRange}`);
