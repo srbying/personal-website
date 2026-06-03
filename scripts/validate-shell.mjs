@@ -78,7 +78,10 @@ assert(
   navIndexes.every((index, position) => position === 0 || index > navIndexes[position - 1]),
   "Expected launch navigation order: Home, Experience, Projects, Resume, Contact"
 );
-assert(siteData.includes("isHighlighted: true"), "Expected Resume navigation to be subtly highlighted");
+assert(
+  !siteData.includes("isHighlighted: true"),
+  "Expected navigation highlight to be route-driven, not hard-coded to Resume"
+);
 for (const label of footerLabels) {
   assert(siteData.includes(`label: "${label}"`), `Expected footer link label: ${label}`);
 }
@@ -90,6 +93,10 @@ assert(layout.includes("SiteFooter"), "Expected shared footer in base layout");
 assert(layout.includes("LaunchNavigation"), "Expected shared launch navigation in base layout");
 
 const navigation = await readProjectFile("src/components/LaunchNavigation.astro");
+assert(
+  navigation.includes("aria-current") && navigation.includes("navigation-link--active"),
+  "Expected navigation active state to use aria-current and active classes"
+);
 assert(navigation.includes("aria-expanded=\"false\""), "Expected accessible mobile menu disclosure state");
 assert(navigation.includes("aria-controls=\"mobile-navigation\""), "Expected mobile menu controls relationship");
 assert(navigation.includes("prefers-reduced-motion: reduce"), "Expected reduced-motion-aware menu behavior");

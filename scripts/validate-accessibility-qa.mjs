@@ -154,6 +154,16 @@ assert(
   "Expected mobile menu aria-hidden, inert property/attribute, Escape close, and focus return behavior"
 );
 assert(
+  navigation.includes("Astro.url.pathname") &&
+    navigation.includes("aria-current") &&
+    navigation.includes("navigation-link--active") &&
+    navigation.includes("mobile-navigation-link--active") &&
+    !navigation.includes("isHighlighted") &&
+    !navigation.includes("navigation-link--highlight") &&
+    !navigation.includes("mobile-navigation-link--highlight"),
+  "Expected navigation active state to be driven by the current route, not a hard-coded highlighted item"
+);
+assert(
   /\.mobile-navigation\[hidden\]\s*{\s*display:\s*none;\s*}/.test(styles),
   "Expected hidden mobile navigation to be removed from layout and tab order"
 );

@@ -23,7 +23,7 @@ export type PublicLink = {
   reviewNotes: string;
 };
 
-export const reviewDate = "2026-06-02";
+export const reviewDate = "2026-06-03";
 
 export function hasConfirmedHref(
   link: PublicLink
@@ -223,7 +223,7 @@ export const projectLinks = {
   },
   soilos: {
     liveApp: {
-      label: "Soilos live app",
+      label: "SoilOS live app",
       href: "https://soil-os.vercel.app",
       displayText: "soil-os.vercel.app",
       isExternal: true,
@@ -232,7 +232,7 @@ export const projectLinks = {
         "Live app redirects to an auth-gated login screen; do not use as a public project CTA at launch."
     },
     github: {
-      label: "Soilos GitHub",
+      label: "SoilOS GitHub",
       isExternal: false,
       isConfirmed: false,
       reviewNotes:
@@ -296,41 +296,51 @@ export const projectScreenshots = {
   ],
   soilos: [
     {
-      label: "Soilos scenario comparison",
+      label: "SoilOS action status",
+      path: "/assets/projects/soilos/action-status.png",
+      format: "png",
+      role: "SoilOS project screenshot",
+      alt: "SoilOS home screen showing Avon Lake soil temperature, recovery status, and next lawn-care action.",
+      reviewStatus: "approved",
+      reviewNotes:
+        "User-supplied replacement screenshot approved on 2026-06-03 for the main project preview, including visible city-level location text."
+    },
+    {
+      label: "SoilOS scenario comparison",
       path: "/assets/projects/soilos/scenario-comparison.png",
       format: "png",
-      role: "Soilos project screenshot",
-      alt: "Soilos three-year scenario comparison dashboard.",
+      role: "SoilOS project screenshot",
+      alt: "SoilOS three-year scenario comparison dashboard.",
       reviewStatus: "approved",
       reviewNotes:
         "User-provided screenshot reviewed with no addresses, precise locations, API keys, auth details, private notes, or sensitive financial details visible."
     },
     {
-      label: "Soilos calculator",
+      label: "SoilOS calculator",
       path: "/assets/projects/soilos/calculator.png",
       format: "png",
-      role: "Soilos project screenshot",
-      alt: "Soilos product and application-rate calculator screen.",
+      role: "SoilOS project screenshot",
+      alt: "SoilOS product and application-rate calculator screen.",
       reviewStatus: "approved",
       reviewNotes:
         "User-provided screenshot reviewed with no addresses, precise locations, API keys, auth details, private notes, or sensitive financial details visible."
     },
     {
-      label: "Soilos calendar task detail",
+      label: "SoilOS calendar task detail",
       path: "/assets/projects/soilos/calendar-task-detail.png",
       format: "png",
-      role: "Soilos project screenshot",
-      alt: "Soilos calendar task detail sheet for spring compost.",
+      role: "SoilOS project screenshot",
+      alt: "SoilOS calendar task detail sheet for spring compost.",
       reviewStatus: "approved",
       reviewNotes:
         "User-provided screenshot reviewed with no addresses, precise locations, API keys, auth details, private notes, or sensitive financial details visible."
     },
     {
-      label: "Soilos calendar month",
+      label: "SoilOS calendar month",
       path: "/assets/projects/soilos/calendar-month.png",
       format: "png",
-      role: "Soilos project screenshot",
-      alt: "Soilos monthly calendar view with scheduled lawn-care tasks.",
+      role: "SoilOS project screenshot",
+      alt: "SoilOS monthly calendar view with scheduled lawn-care tasks.",
       reviewStatus: "approved",
       reviewNotes:
         "User-provided screenshot reviewed with no addresses, precise locations, API keys, auth details, private notes, or sensitive financial details visible."

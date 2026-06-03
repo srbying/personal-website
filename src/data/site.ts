@@ -4,7 +4,6 @@ import siteConfig from "./siteConfig.json";
 export type LaunchNavigationItem = {
   label: string;
   href: string;
-  isHighlighted?: boolean;
 };
 
 export type FooterLink = {
@@ -71,7 +70,7 @@ export const launchNavigation = [
   { label: "Home", href: "/" },
   { label: "Experience", href: "/experience/" },
   { label: "Projects", href: "/projects/" },
-  { label: "Resume", href: "/resume/", isHighlighted: true },
+  { label: "Resume", href: "/resume/" },
   { label: "Contact", href: "/contact/" }
 ] satisfies readonly LaunchNavigationItem[];
 
