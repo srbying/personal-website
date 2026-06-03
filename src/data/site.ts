@@ -1,4 +1,4 @@
-import { brandAssets, contactLinks, resumePdf } from "./launchAssets";
+import { brandAssets, contactLinks } from "./launchAssets";
 
 export type LaunchNavigationItem = {
   label: string;
@@ -9,6 +9,7 @@ export type LaunchNavigationItem = {
 export type FooterLink = {
   label: string;
   href: string;
+  isExternal: boolean;
 };
 
 export const siteMetadata = {
@@ -30,8 +31,24 @@ export const launchNavigation = [
 ] satisfies readonly LaunchNavigationItem[];
 
 export const footerLinks = [
-  { label: "Email", href: contactLinks.email.href },
-  { label: "LinkedIn", href: contactLinks.linkedIn.href },
-  { label: "GitHub", href: contactLinks.github.href },
-  { label: "Resume PDF", href: resumePdf.path }
+  {
+    label: "Email",
+    href: contactLinks.email.href,
+    isExternal: contactLinks.email.isExternal
+  },
+  {
+    label: "LinkedIn",
+    href: contactLinks.linkedIn.href,
+    isExternal: contactLinks.linkedIn.isExternal
+  },
+  {
+    label: "GitHub",
+    href: contactLinks.github.href,
+    isExternal: contactLinks.github.isExternal
+  },
+  {
+    label: "Resume PDF",
+    href: contactLinks.resumePdf.href,
+    isExternal: contactLinks.resumePdf.isExternal
+  }
 ] satisfies readonly FooterLink[];
