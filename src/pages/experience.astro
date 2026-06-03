@@ -1,15 +1,104 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  experienceMilitaryService,
+  experiencePage,
+  experienceRoles
+} from "../data/experience";
 ---
 
 <BaseLayout
   title="Experience"
-  description="Steven Byington's professional experience and role history."
+  description="Steven Byington's professional experience, role progression, selected impact, technical depth, and military service."
 >
-  <section class="page-section">
-    <h1>Experience</h1>
-    <p>
-      Professional experience content will build from this route in a future slice.
-    </p>
+  <section class="experience-hero" aria-labelledby="experience-title">
+    <div class="experience-hero__content">
+      <p class="section-kicker">{experiencePage.kicker}</p>
+      <h1 id="experience-title">{experiencePage.title}</h1>
+      <p class="experience-hero__lead">{experiencePage.lead}</p>
+    </div>
+
+    <dl class="experience-hero__facts" aria-label="Experience highlights">
+      {
+        experiencePage.facts.map((fact) => (
+          <div>
+            <dt>{fact.label}</dt>
+            <dd>{fact.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="experience-section" aria-labelledby="private-sector-heading">
+    <div class="experience-section__heading">
+      <p class="section-kicker">Private-sector experience</p>
+      <h2 id="private-sector-heading">{experiencePage.timelineHeading}</h2>
+      <p>{experiencePage.timelineLead}</p>
+    </div>
+
+    <div class="experience-timeline">
+      {
+        experienceRoles.map((role) => (
+          <article
+            class:list={[
+              "experience-role",
+              role.progressionLabel && "experience-role--progression"
+            ]}
+            aria-labelledby={`role-${role.id}`}
+          >
+            <div class="experience-role__date">
+              <p>{role.dateRange}</p>
+              {role.progressionLabel && <span>{role.progressionLabel}</span>}
+            </div>
+
+            <div class="experience-role__body">
+              <header class="experience-role__header">
+                <p class="experience-role__company">{role.company}</p>
+                <h3 id={`role-${role.id}`}>{role.role}</h3>
+                {role.context && <p class="experience-role__context">{role.context}</p>}
+              </header>
+
+              <p class="experience-role__summary">{role.summary}</p>
+
+              <div class="experience-role__details">
+                <section aria-labelledby={`role-${role.id}-impact`}>
+                  <h4 id={`role-${role.id}-impact`}>Selected Impact</h4>
+                  <ul>
+                    {role.impacts.map((impact) => <li>{impact}</li>)}
+                  </ul>
+                </section>
+
+                {
+                  role.technologies?.length && (
+                    <section aria-labelledby={`role-${role.id}-technologies`}>
+                      <h4 id={`role-${role.id}-technologies`}>Selected Technologies</h4>
+                      <p class="experience-role__technologies">
+                        {role.technologies.join(", ")}
+                      </p>
+                    </section>
+                  )
+                }
+              </div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="experience-military" aria-labelledby="military-service-heading">
+    <div class="experience-military__heading">
+      <p class="section-kicker">{experiencePage.militaryHeading}</p>
+      <h2 id="military-service-heading">Marine Corps leadership foundation</h2>
+    </div>
+
+    <div class="experience-military__body">
+      <h3>{experienceMilitaryService.role}</h3>
+      <p class="experience-military__meta">
+        {experienceMilitaryService.organization} - {experienceMilitaryService.dateRange}
+      </p>
+      <p>{experienceMilitaryService.summary}</p>
+    </div>
   </section>
 </BaseLayout>

@@ -6,6 +6,7 @@ const root = process.cwd();
 
 const homeDataPath = "src/data/home.ts";
 const homePagePath = "src/pages/index.astro";
+const experienceDataPath = "src/data/experience.ts";
 const packagePath = "package.json";
 
 const rejectedText = [
@@ -29,17 +30,17 @@ const recentExperience = [
   {
     company: "Animoto",
     role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021-Mar 2026"
+    dateRange: "Mar 2021 - Present"
   },
   {
     company: "Nike",
     role: "Full Stack Engineer",
-    dateRange: "Feb 2018-Mar 2021"
+    dateRange: "Feb 2018 - Mar 2021"
   },
   {
     company: "DiscoverOrg (now ZoomInfo)",
     role: "Software Developer",
-    dateRange: "Nov 2016-Feb 2018"
+    dateRange: "Nov 2016 - Feb 2018"
   }
 ];
 
@@ -72,10 +73,12 @@ function assert(condition, message) {
 
 assert(existsSync(path.join(root, homeDataPath)), `Missing ${homeDataPath}`);
 assert(existsSync(path.join(root, homePagePath)), `Missing ${homePagePath}`);
+assert(existsSync(path.join(root, experienceDataPath)), `Missing ${experienceDataPath}`);
 
-const [homeData, homePage, packageJsonSource] = await Promise.all([
+const [homeData, homePage, experienceData, packageJsonSource] = await Promise.all([
   readProjectFile(homeDataPath),
   readProjectFile(homePagePath),
+  readProjectFile(experienceDataPath),
   readProjectFile(packagePath)
 ]);
 
@@ -112,9 +115,9 @@ for (const { label, href } of ctaExpectations) {
 }
 
 for (const { company, role, dateRange } of recentExperience) {
-  assert(homeData.includes(company), `Missing recent experience company: ${company}`);
-  assert(homeData.includes(role), `Missing recent experience role: ${role}`);
-  assert(homeData.includes(dateRange), `Missing recent experience dates: ${dateRange}`);
+  assert(experienceData.includes(company), `Missing recent experience company: ${company}`);
+  assert(experienceData.includes(role), `Missing recent experience role: ${role}`);
+  assert(experienceData.includes(dateRange), `Missing recent experience dates: ${dateRange}`);
 }
 
 const principleMatches = homeData.match(/^\s+title: "/gm) ?? [];
@@ -137,8 +140,10 @@ assert(
   "Expected homepage to render the How I Lead leadership principles"
 );
 assert(
-  homeData.includes("recentExperience") && homePage.includes("recentExperience"),
-  "Expected homepage to render compact Recent Experience rows"
+  homeData.includes("recentExperience") &&
+    homeData.includes("experiencePreview") &&
+    homePage.includes("recentExperience"),
+  "Expected homepage to render compact Recent Experience rows from shared experience data"
 );
 assert(
   homeData.includes("closingCtas") && homePage.includes("closingCtas"),

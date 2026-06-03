@@ -6,6 +6,7 @@ const root = process.cwd();
 
 const requiredFiles = [
   "src/data/resume.ts",
+  "src/data/experience.ts",
   "src/pages/resume.astro",
   "src/styles/global.css",
   "src/data/launchAssets.ts",
@@ -89,9 +90,10 @@ for (const filePath of requiredFiles) {
   assert(existsSync(path.join(root, filePath)), `Missing required file: ${filePath}`);
 }
 
-const [resumeData, resumePage, styles, manifest, packageJsonSource] =
+const [resumeData, experienceData, resumePage, styles, manifest, packageJsonSource] =
   await Promise.all([
     readProjectFile("src/data/resume.ts"),
+    readProjectFile("src/data/experience.ts"),
     readProjectFile("src/pages/resume.astro"),
     readProjectFile("src/styles/global.css"),
     readProjectFile("src/data/launchAssets.ts"),
@@ -119,8 +121,10 @@ assert(
   "Expected the Resume page PDF link to use the approved resumePdf path"
 );
 
+const resumeContentSources = `${resumeData}\n${experienceData}`;
+
 for (const snippet of requiredResumeData) {
-  assert(resumeData.includes(snippet), `Missing resume data: ${snippet}`);
+  assert(resumeContentSources.includes(snippet), `Missing resume data: ${snippet}`);
 }
 
 for (const snippet of requiredPageSnippets) {
@@ -137,7 +141,12 @@ assert(
   "Expected Resume sections in launch order"
 );
 
-const publicHtmlSources = `${resumeData}\n${resumePage}`;
+assert(
+  resumeData.includes("experienceRoles") && resumeData.includes("sharedExperienceMilitaryService"),
+  "Expected resume role history to derive from shared experience data"
+);
+
+const publicHtmlSources = `${resumeContentSources}\n${resumePage}`;
 for (const privateString of rejectedPrivateStrings) {
   assert(
     !publicHtmlSources.includes(privateString),
