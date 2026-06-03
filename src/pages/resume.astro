@@ -1,17 +1,154 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { resumePdf } from "../data/launchAssets";
+import {
+  resumeContactLinks,
+  resumeCredentials,
+  resumeExperience,
+  resumeHeader,
+  resumeMilitaryService,
+  resumeSkillGroups,
+  resumeSummary
+} from "../data/resume";
 ---
 
 <BaseLayout
   title="Resume"
-  description="Resume details and PDF link for Steven Byington."
+  description="HTML resume for Steven Byington, Software Engineering Manager for product-minded teams."
 >
-  <section class="page-section">
-    <h1>Resume</h1>
-    <p>
-      Resume content will build from this route, with the PDF path reserved at
-      <a href={resumePdf.path}>{resumePdf.path}</a>.
-    </p>
+  <section class="resume-hero" aria-labelledby="resume-title">
+    <div class="resume-hero__content">
+      <p class="section-kicker">Resume</p>
+      <h1 id="resume-title">{resumeHeader.name}</h1>
+      <p class="resume-hero__role">{resumeHeader.role}</p>
+      <p class="resume-hero__positioning">{resumeHeader.positioning}</p>
+      <p>{resumeHeader.lead}</p>
+    </div>
+    <div class="resume-hero__actions" aria-label="Resume actions">
+      <a
+        class="button-link button-link--primary"
+        href={resumeHeader.pdfPath}
+        download
+      >
+        {resumeHeader.pdfLabel}
+      </a>
+    </div>
   </section>
+
+  <article class="resume-document" aria-label="Steven Byington resume">
+    <section class="resume-section" aria-labelledby="resume-summary-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Summary</p>
+        <h2 id="resume-summary-heading">Leadership, delivery, and full-stack depth</h2>
+      </div>
+      <div class="resume-section__body resume-summary">
+        {resumeSummary.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-experience-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Experience</p>
+        <h2 id="resume-experience-heading">Selected role history</h2>
+      </div>
+      <div class="resume-section__body resume-experience-list">
+        {
+          resumeExperience.map((item) => (
+            <article class="resume-experience">
+              <header class="resume-experience__header">
+                <div>
+                  <h3>{item.role}</h3>
+                  <p>{item.company}</p>
+                  {item.context && <p class="resume-experience__context">{item.context}</p>}
+                </div>
+                <p class="resume-experience__date">{item.dateRange}</p>
+              </header>
+              <ul>
+                {item.bullets.map((bullet) => <li>{bullet}</li>)}
+              </ul>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-skills-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Technical Skills</p>
+        <h2 id="resume-skills-heading">Concise grouped skills</h2>
+      </div>
+      <div class="resume-section__body resume-skills">
+        {
+          resumeSkillGroups.map((group) => (
+            <section class="resume-skill-group" aria-labelledby={`skill-${group.group.toLowerCase().replaceAll(" ", "-").replaceAll("&", "and")}`}>
+              <h3 id={`skill-${group.group.toLowerCase().replaceAll(" ", "-").replaceAll("&", "and")}`}>
+                {group.group}
+              </h3>
+              <p>{group.skills.join(", ")}</p>
+            </section>
+          ))
+        }
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-education-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Education & Certifications</p>
+        <h2 id="resume-education-heading">Credentials</h2>
+      </div>
+      <div class="resume-section__body">
+        <dl class="resume-credentials">
+          {
+            resumeCredentials.map((credential) => (
+              <div>
+                <dt>{credential.name}</dt>
+                <dd>{credential.issuer}</dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-military-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Military Service</p>
+        <h2 id="resume-military-heading">Marine Corps leadership foundation</h2>
+      </div>
+      <div class="resume-section__body resume-military">
+        <h3>{resumeMilitaryService.role}</h3>
+        <p class="resume-military__meta">
+          {resumeMilitaryService.organization} · {resumeMilitaryService.dateRange}
+        </p>
+        <p>{resumeMilitaryService.summary}</p>
+      </div>
+    </section>
+
+    <section class="resume-section" aria-labelledby="resume-contact-heading">
+      <div class="resume-section__heading">
+        <p class="section-kicker">Contact</p>
+        <h2 id="resume-contact-heading">Public contact paths</h2>
+      </div>
+      <div class="resume-section__body">
+        <dl class="resume-contact-list">
+          {
+            resumeContactLinks.map((link) => (
+              <div>
+                <dt>{link.label}</dt>
+                <dd>
+                  <a
+                    href={link.href}
+                    target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
+                    rel={link.isExternal && !link.href.startsWith("mailto:") ? "noreferrer" : undefined}
+                    download={link.href === resumeHeader.pdfPath ? true : undefined}
+                  >
+                    {link.displayText}
+                  </a>
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </div>
+    </section>
+  </article>
 </BaseLayout>
