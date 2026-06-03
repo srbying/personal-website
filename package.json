@@ -11,7 +11,8 @@
     "test:assets": "node scripts/validate-assets.mjs",
     "test:home": "node scripts/validate-home.mjs",
     "test:resume": "node scripts/validate-resume.mjs",
-    "test:experience": "node scripts/validate-experience.mjs"
+    "test:experience": "node scripts/validate-experience.mjs",
+    "test:contact": "node scripts/validate-contact.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
