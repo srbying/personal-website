@@ -106,6 +106,8 @@ assert(
   "Expected Animoto role progression to stay adjacent and chronological before Nike"
 );
 
+// TODO: Migrate this to AST parsing; regex and quote counting can
+// miscount nested arrays, comments, or escaped quotes in future edits.
 const technologyLists = experienceData.match(/technologies:\s*\[[\s\S]*?\]/g) ?? [];
 assert(technologyLists.length >= 4, "Expected selected technologies where useful");
 for (const list of technologyLists) {
@@ -143,10 +145,16 @@ assert(
 );
 
 assert(
-  homeData.includes("experiencePreview") &&
-    experienceData.includes("Mar 2021 - Present") &&
-    !homeData.includes("Mar 2021-Mar 2026"),
-  "Expected Home recent experience preview to derive from current experience data"
+  homeData.includes("experiencePreview"),
+  "Home missing experiencePreview export reference"
+);
+assert(
+  experienceData.includes("Mar 2021 - Present"),
+  "Experience data missing current date range"
+);
+assert(
+  !homeData.includes("Mar 2021-Mar 2026"),
+  "Home still contains old hardcoded date"
 );
 
 assert(
