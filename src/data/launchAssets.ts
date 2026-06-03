@@ -1,3 +1,5 @@
+import siteConfig from "./siteConfig.json";
+
 export type ReviewStatus = "approved" | "pending" | "redacted";
 
 export type LaunchAsset = {
@@ -31,7 +33,7 @@ export function hasConfirmedHref(
 
 export const resumePdf = {
   label: "Steven Byington Resume PDF",
-  path: "/resume/steven-byington-resume.pdf",
+  path: siteConfig.resumePdfRoute,
   format: "pdf",
   role: "standard recruiter handoff artifact",
   reviewStatus: "approved",

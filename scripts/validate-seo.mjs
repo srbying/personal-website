@@ -1,11 +1,11 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import siteConfig from "../src/data/siteConfig.json" with { type: "json" };
 
 const root = process.cwd();
-const siteUrl = "https://stevenbyington.me";
+const { siteUrl, resumePdfRoute } = siteConfig;
 const openGraphImage = `${siteUrl}/assets/brand/open-graph.png`;
-const resumePdfPath = "/resume/steven-byington-resume.pdf";
 
 const htmlPages = [
   {
@@ -68,7 +68,7 @@ const expectedSitemapPaths = [
   "/projects/soilos/",
   "/resume/",
   "/contact/",
-  resumePdfPath
+  resumePdfRoute
 ];
 
 const privateStrings = [
@@ -221,7 +221,17 @@ assert(
   "404 page must remain noindex"
 );
 
-assert(existsSync(path.join(root, `public${resumePdfPath}`)), "Missing public Resume PDF");
-assert(existsSync(path.join(root, `dist${resumePdfPath}`)), "Missing built Resume PDF");
+assert(existsSync(path.join(root, `public${resumePdfRoute}`)), "Missing public Resume PDF");
+assert(existsSync(path.join(root, `dist${resumePdfRoute}`)), "Missing built Resume PDF");
+
+const validatorSource = await readProjectFile("scripts/validate-seo.mjs");
+assert(
+  !/const\s+siteUrl\s*=\s*["']https:/.test(validatorSource),
+  "SEO validator must import siteUrl from shared config"
+);
+assert(
+  !/const\s+resumePdf(?:Path|Route)\s*=\s*["']\/resume\//.test(validatorSource),
+  "SEO validator must import the resume PDF route from shared config"
+);
 
 console.log("Issue #10 SEO metadata checks passed.");

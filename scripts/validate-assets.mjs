@@ -1,8 +1,10 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import siteConfig from "../src/data/siteConfig.json" with { type: "json" };
 
 const root = process.cwd();
+const resumePdfPublicFile = `public${siteConfig.resumePdfRoute}`;
 
 const requiredPublicAssets = [
   "public/assets/brand/logo-system.png",
@@ -16,7 +18,7 @@ const requiredPublicAssets = [
   "public/assets/brand/open-graph.png",
   "public/assets/hero/hero-landscape.webp",
   "public/assets/hero/hero-landscape.png",
-  "public/resume/steven-byington-resume.pdf",
+  resumePdfPublicFile,
   "public/assets/projects/aeris/chat-response.png",
   "public/assets/projects/aeris/chat-loading.png",
   "public/assets/projects/aeris/activity-history.png",
@@ -29,7 +31,7 @@ const requiredPublicAssets = [
 ];
 
 const requiredManifestSnippets = [
-  "/resume/steven-byington-resume.pdf",
+  siteConfig.resumePdfRoute,
   "https://aeris-lac.vercel.app",
   "https://github.com/srbying/aeris",
   "https://soil-os.vercel.app",

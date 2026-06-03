@@ -1,4 +1,5 @@
 import { brandAssets, contactLinks } from "./launchAssets";
+import siteConfig from "./siteConfig.json";
 
 export type LaunchNavigationItem = {
   label: string;
@@ -22,9 +23,8 @@ export type StructuredIdentityMetadata = {
   sameAs: readonly string[];
 };
 
-export const siteUrl = "https://stevenbyington.me";
 export const siteName = "Steven Byington";
-export const resumePdfRoute = "/resume/steven-byington-resume.pdf";
+export const { siteUrl, resumePdfRoute } = siteConfig;
 
 export function toAbsoluteUrl(pathname: string): string {
   return new URL(pathname, siteUrl).href;
