@@ -85,6 +85,86 @@ import { launchNavigation, siteMetadata } from "../data/site";
 
     header.dataset.navigationReady = "true";
 
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const headerScrollDistance = 96;
+    const headerFallbackProperties = [
+      "--header-height",
+      "--header-padding-block",
+      "--brand-link-height",
+      "--brand-wordmark-width",
+      "--brand-icon-size"
+    ];
+    let headerAnimationFrame = 0;
+
+    const supportsNativeHeaderAnimation = () =>
+      !reducedMotionQuery.matches &&
+      typeof CSS !== "undefined" &&
+      CSS.supports("(animation-timeline: scroll()) and (animation-range: 0% 100%)");
+
+    const getHeaderScrollProgress = () => {
+      const scrollProgress = Math.min(1, Math.max(0, window.scrollY / headerScrollDistance));
+
+      return reducedMotionQuery.matches ? Number(scrollProgress >= 1) : scrollProgress;
+    };
+
+    const getHeaderFallbackValues = () => {
+      const rootFontSize = Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      const isMobile = window.matchMedia("(max-width: 840px)").matches;
+      const isSmallMobile = window.matchMedia("(max-width: 520px)").matches;
+
+      return {
+        "--header-height": [isMobile ? 68 : 76, isMobile ? 56 : 58],
+        "--header-padding-block": isMobile
+          ? [0.75 * rootFontSize, 0.375 * rootFontSize]
+          : [0.1 * rootFontSize, 0.165 * rootFontSize],
+        "--brand-link-height": isMobile
+          ? [2.75 * rootFontSize, 2.75 * rootFontSize]
+          : [4.55 * rootFontSize, 3.3 * rootFontSize],
+        "--brand-wordmark-width": [20 * rootFontSize, 14.5 * rootFontSize],
+        "--brand-icon-size": [
+          (isSmallMobile ? 2.35 : 2.55) * rootFontSize,
+          2.05 * rootFontSize
+        ]
+      };
+    };
+
+    const setHeaderFallbackValue = (property, [expandedValue, compactValue], progress) => {
+      const value = expandedValue + (compactValue - expandedValue) * progress;
+
+      header.style.setProperty(property, `${value.toFixed(2)}px`);
+    };
+
+    const syncHeaderScrollProgress = () => {
+      headerAnimationFrame = 0;
+
+      if (supportsNativeHeaderAnimation()) {
+        headerFallbackProperties.forEach((property) => {
+          header.style.removeProperty(property);
+        });
+        return;
+      }
+
+      const progress = getHeaderScrollProgress();
+      const fallbackValues = getHeaderFallbackValues();
+
+      headerFallbackProperties.forEach((property) => {
+        setHeaderFallbackValue(property, fallbackValues[property], progress);
+      });
+    };
+
+    const requestHeaderScrollProgressSync = () => {
+      if (headerAnimationFrame !== 0) {
+        return;
+      }
+
+      headerAnimationFrame = window.requestAnimationFrame(syncHeaderScrollProgress);
+    };
+
+    syncHeaderScrollProgress();
+    window.addEventListener("scroll", requestHeaderScrollProgressSync, { passive: true });
+    window.addEventListener("resize", requestHeaderScrollProgressSync);
+    reducedMotionQuery.addEventListener("change", requestHeaderScrollProgressSync);
+
     const toggle = header.querySelector("[data-nav-toggle]");
     const panel = header.querySelector("#mobile-navigation");
 
@@ -92,7 +172,6 @@ import { launchNavigation, siteMetadata } from "../data/site";
       return;
     }
 
-    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     const desktopQuery = window.matchMedia("(min-width: 841px)");
     const panelLinks = Array.from(panel.querySelectorAll("a"));
 
