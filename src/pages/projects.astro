@@ -1,23 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { projectLinks, projectScreenshots } from "../data/launchAssets";
+import { projects } from "../data/projects";
 
-const projects = [
-  {
-    title: "Aeris",
-    summary:
-      "A personal fitness analytics tool that turns workout data into trends, comparisons, and progress insights.",
-    screenshots: projectScreenshots.aeris,
-    links: [projectLinks.aeris.liveApp, projectLinks.aeris.github]
-  },
-  {
-    title: "Soilos",
-    summary:
-      "A personal lawn-care planning app framed through market research, seasonal planning, budget tracking, and product thinking.",
-    screenshots: projectScreenshots.soilos,
-    links: []
-  }
-];
+const intro =
+  "A small set of personal tools and experiments built to solve real problems, explore product ideas, and deepen technical judgment.";
 ---
 
 <BaseLayout
@@ -26,10 +12,7 @@ const projects = [
 >
   <section class="page-section projects-section">
     <h1>Projects</h1>
-    <p>
-      A small set of personal tools and experiments built to solve real
-      problems, explore product ideas, and deepen technical judgment.
-    </p>
+    <p>{intro}</p>
     <div class="project-list">
       {
         projects.map((project) => (
@@ -38,11 +21,15 @@ const projects = [
               <h2>{project.title}</h2>
               <p>{project.summary}</p>
               {
-                project.links.length > 0 && (
+                project.actions.length > 0 && (
                   <nav class="project-links" aria-label={`${project.title} links`}>
-                    {project.links.map((link) => (
-                      <a href={link.href} target="_blank" rel="noreferrer">
-                        {link.label}
+                    {project.actions.map((action) => (
+                      <a
+                        href={action.href}
+                        target={action.isExternal ? "_blank" : undefined}
+                        rel={action.isExternal ? "noopener noreferrer" : undefined}
+                      >
+                        {action.label}
                       </a>
                     ))}
                   </nav>
@@ -51,8 +38,8 @@ const projects = [
             </div>
             <figure class="project-entry__media">
               <img
-                src={project.screenshots[0].path}
-                alt={project.screenshots[0].alt}
+                src={project.previewScreenshot.path}
+                alt={project.previewScreenshot.alt}
                 loading="lazy"
                 decoding="async"
               />
