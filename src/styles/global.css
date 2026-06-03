@@ -535,6 +535,230 @@ button {
   overflow-wrap: anywhere;
 }
 
+.resume-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: end;
+  padding-block: clamp(2.5rem, 6vw, 4.75rem);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.resume-hero h1 {
+  max-width: 14ch;
+  margin: 0;
+  color: var(--color-text);
+  font-size: 4.2rem;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.resume-hero p {
+  max-width: 720px;
+  margin: 1.2rem 0 0;
+  color: var(--color-muted);
+  font-size: 1.12rem;
+}
+
+.resume-hero__role {
+  color: var(--color-accent-strong) !important;
+  font-size: 1.35rem !important;
+  font-weight: 850;
+}
+
+.resume-hero__positioning {
+  color: var(--color-text) !important;
+  font-size: 1rem !important;
+  font-weight: 850;
+}
+
+.resume-hero__actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.resume-document {
+  display: grid;
+  padding-block: 1rem 0;
+}
+
+.resume-section {
+  display: grid;
+  grid-template-columns: minmax(11rem, 0.36fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  padding-block: clamp(2rem, 4vw, 3rem);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.resume-section__heading {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.resume-section__heading h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.55rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.resume-section__body {
+  min-width: 0;
+}
+
+.resume-summary {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.resume-summary p,
+.resume-military p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 1.02rem;
+}
+
+.resume-experience-list {
+  display: grid;
+}
+
+.resume-experience {
+  padding-block: 1.35rem;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.resume-experience:first-child {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.resume-experience:last-child {
+  padding-block-end: 0;
+}
+
+.resume-experience__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: start;
+}
+
+.resume-experience h3,
+.resume-skill-group h3,
+.resume-military h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.resume-experience__header p,
+.resume-military__meta {
+  margin: 0.3rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+}
+
+.resume-experience__context {
+  color: var(--color-accent-strong) !important;
+  font-weight: 750;
+}
+
+.resume-experience__date {
+  color: var(--color-accent-strong) !important;
+  font-size: 0.9rem !important;
+  font-weight: 850;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.resume-experience ul {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  padding-inline-start: 1.15rem;
+}
+
+.resume-experience li {
+  color: var(--color-text);
+  font-size: 0.98rem;
+}
+
+.resume-skills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1.5rem;
+}
+
+.resume-skill-group {
+  padding-block: 0.95rem;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.resume-skill-group:nth-child(-n + 2) {
+  padding-block-start: 0;
+  border-block-start: 0;
+}
+
+.resume-skill-group p {
+  margin: 0.45rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.96rem;
+}
+
+.resume-credentials,
+.resume-contact-list {
+  display: grid;
+  margin: 0;
+  border-block-start: 1px solid var(--color-border);
+}
+
+.resume-credentials div,
+.resume-contact-list div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 13rem) minmax(0, 1fr);
+  gap: 1rem;
+  padding-block: 0.9rem;
+  border-block-end: 1px solid var(--color-border);
+}
+
+.resume-credentials dt,
+.resume-credentials dd,
+.resume-contact-list dt,
+.resume-contact-list dd {
+  margin: 0;
+}
+
+.resume-credentials dt,
+.resume-contact-list dt {
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  font-weight: 850;
+}
+
+.resume-credentials dd,
+.resume-contact-list dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+}
+
+.resume-contact-list a {
+  color: var(--color-accent-strong);
+  font-weight: 750;
+  text-decoration-color: rgba(31, 59, 46, 0.35);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
+.resume-military {
+  display: grid;
+  gap: 0.6rem;
+}
+
 .projects-section {
   align-content: start;
 }
@@ -706,8 +930,37 @@ button {
   }
 
   .contact-list__item,
+  .resume-hero,
+  .resume-section,
   .project-entry {
     grid-template-columns: 1fr;
+  }
+
+  .resume-hero {
+    align-items: start;
+  }
+
+  .resume-hero__actions {
+    justify-content: flex-start;
+  }
+
+  .resume-hero h1 {
+    font-size: 3rem;
+  }
+
+  .resume-experience__header,
+  .resume-skills {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-experience__date {
+    text-align: start;
+    white-space: normal;
+  }
+
+  .resume-skill-group:nth-child(2) {
+    padding-block-start: 0.95rem;
+    border-block-start: 1px solid var(--color-border);
   }
 
   .project-entry {
@@ -746,12 +999,14 @@ button {
 
   .hero-section h1,
   .page-section h1,
+  .resume-hero h1,
   .not-found-section h1 {
     font-size: 2.55rem;
   }
 
   .hero-section p,
   .page-section p,
+  .resume-hero p,
   .not-found-section p {
     font-size: 1.05rem;
   }
@@ -771,6 +1026,160 @@ button {
     min-height: auto;
     padding-inline: 0;
     border-inline-end: 0;
+  }
+
+  .resume-credentials div,
+  .resume-contact-list div {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
+@media print {
+  @page {
+    margin: 0.55in;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  body {
+    min-width: 0;
+    background: #ffffff;
+    color: #000000;
+    font-size: 10pt;
+    line-height: 1.35;
+  }
+
+  .skip-link,
+  .site-header,
+  .site-footer,
+  .resume-hero__actions {
+    display: none !important;
+  }
+
+  .site-shell,
+  .site-main {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .resume-hero {
+    display: block;
+    padding: 0 0 0.18in;
+    border-block-end: 1pt solid #999999;
+  }
+
+  .resume-hero h1 {
+    max-width: none;
+    color: #000000;
+    font-size: 24pt;
+  }
+
+  .resume-hero p,
+  .resume-hero__role,
+  .resume-hero__positioning,
+  .resume-summary p,
+  .resume-military p,
+  .resume-skill-group p,
+  .resume-experience li,
+  .resume-experience__header p,
+  .resume-military__meta {
+    color: #000000 !important;
+    font-size: 10pt !important;
+  }
+
+  .resume-hero p {
+    max-width: none;
+    margin-block-start: 0.06in;
+  }
+
+  .section-kicker {
+    color: #000000;
+    font-size: 8pt;
+  }
+
+  .resume-document {
+    display: block;
+    padding: 0;
+  }
+
+  .resume-section {
+    display: block;
+    padding-block: 0.18in;
+    border-block-end: 1pt solid #cccccc;
+    break-inside: avoid;
+  }
+
+  .resume-section__heading {
+    display: block;
+  }
+
+  .resume-section__heading h2 {
+    color: #000000;
+    font-size: 13pt;
+  }
+
+  .resume-section__body {
+    margin-block-start: 0.08in;
+  }
+
+  .resume-experience {
+    padding-block: 0.12in;
+    border-block-start: 1pt solid #dddddd;
+    break-inside: avoid;
+  }
+
+  .resume-experience__header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .resume-experience h3,
+  .resume-skill-group h3,
+  .resume-military h3 {
+    color: #000000;
+    font-size: 10.5pt;
+  }
+
+  .resume-experience ul {
+    gap: 0.04in;
+    margin-block-start: 0.06in;
+  }
+
+  .resume-skills {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 0.18in;
+  }
+
+  .resume-skill-group {
+    padding-block: 0.07in;
+    border-block-start: 1pt solid #dddddd;
+    break-inside: avoid;
+  }
+
+  .resume-credentials,
+  .resume-contact-list {
+    border-block-start: 1pt solid #dddddd;
+  }
+
+  .resume-credentials div,
+  .resume-contact-list div {
+    grid-template-columns: 1.55in minmax(0, 1fr);
+    padding-block: 0.06in;
+    border-block-end: 1pt solid #dddddd;
+  }
+
+  .resume-credentials dt,
+  .resume-contact-list dt,
+  .resume-credentials dd,
+  .resume-contact-list dd,
+  .resume-contact-list a {
+    color: #000000;
+    font-size: 10pt;
   }
 }
 
