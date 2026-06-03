@@ -33,11 +33,12 @@ export const experiencePage = {
   kicker: "Experience",
   title: "Role history with product-minded impact",
   lead:
-    "A focused look at Steven's private-sector engineering path, role progression, selected impact, and the leadership foundation that shapes how he manages teams.",
+    "A focused look at Steven's engineering path, role progression, selected impact, and the leadership foundation that shapes how he manages teams.",
   facts: [
     {
-      label: "Current focus",
-      value: "Engineering management for growth, onboarding, purchasing, and collaboration work"
+      label: "Leadership Focus",
+      value:
+        "Leading product-minded engineering teams through ambiguity, operational complexity, and meaningful customer impact."
     },
     {
       label: "Technical base",
@@ -48,7 +49,7 @@ export const experiencePage = {
       value: "USMC veteran with a calm, accountable operating style"
     }
   ],
-  timelineHeading: "Private-sector experience",
+  timelineHeading: "Experience",
   timelineLead:
     "Recent roles keep month-and-year dates for chronology. Earlier consulting work stays compact while preserving the shape of the path.",
   militaryHeading: "Military Service"
@@ -59,13 +60,13 @@ export const experienceRoles = [
     id: "animoto-manager",
     company: "Animoto",
     role: "Software Engineering Manager",
-    dateRange: "Mar 2025 - Present",
-    context: "Leading customer-facing growth engineering team",
+    dateRange: "Mar 2025 - Mar 2026",
+    context: "Led customer-facing growth engineering team",
     progressionLabel: "Animoto progression",
     summary:
-      "Leads a customer-facing growth engineering team across onboarding, purchasing, collaboration features, engineering system health, and team development.",
+      "Led a customer-facing growth engineering team across onboarding, purchasing, collaboration features, engineering system health, and team development.",
     impacts: [
-      "Manage and develop a cross-level team responsible for the growth funnel, customer onboarding, purchasing workflows, engineering system health, and customer collaboration features.",
+      "Managed and developed a cross-level team responsible for the growth funnel, customer onboarding, purchasing workflows, engineering system health, and customer collaboration features.",
       "Grew an intermediate engineer from day one through her first pull request, then progressively expanded her ownership from small features to leading a full technical plan.",
       "Developed a newly promoted senior engineer as a leadership point person, creating space for her to build management judgment while still driving team outcomes.",
       "Diagnosed the slow database queries flooding on-call alerting, advocated for a fix, and implemented it, improving query latency from 1m 25s to 5ms while reducing database strain.",
@@ -74,7 +75,20 @@ export const experienceRoles = [
       "Built a weighted backlog scoring worksheet using risk, complexity, deadlines, and cost to improve leadership planning and surface overlooked risks such as compliance-critical Ruby upgrades.",
       "Navigated a critical Kubernetes end-of-life infrastructure risk by clearing roadmap space for the strongest infrastructure engineer, protecting focus, and securing leadership support for a dedicated infrastructure hire."
     ],
-    technologies: ["Ruby", "Kubernetes", "Braintree", "Datadog", "Jira", "GitHub"]
+    technologies: [
+      "Ruby on Rails",
+      "AWS",
+      "Next.js",
+      "Node.js",
+      "React",
+      "TypeScript",
+      "Jira",
+      "Graphql",
+      "Github",
+      "Braintree",
+      "Agile Methodologies",
+      "AI-assisted engineering workflows"
+    ]
   },
   {
     id: "animoto-senior-engineer",
@@ -90,7 +104,17 @@ export const experienceRoles = [
       "Presented on Next.js 14 at Redbrick DevCon, sparking cross-team technical discussion and increasing visibility as an engineering leader.",
       "Maintained team composure and momentum through company and team transitions by creating retro space for difficult conversations, communicating timeline shifts early, and keeping delivery moving."
     ],
-    technologies: ["Next.js 14", "React", "Scrum", "Kanban", "Pricing systems"]
+    technologies: [
+      "Ruby on Rails",
+      "Next.js",
+      "Node.js",
+      "react",
+      "Jira",
+      "Datadog",
+      "Github",
+      "CI/CD",
+      "AI-assisted engineering workflows"
+    ]
   },
   {
     id: "nike-full-stack-engineer",
@@ -107,7 +131,7 @@ export const experienceRoles = [
       "Translated a legacy Java SSO service into Node.js and led infrastructure migration from Chef, Go, and CircleCI to Jenkins ahead of schedule.",
       "Integrated data from internal APIs using vertical slice delivery, updated product schema with MyBatis, built Node services and daemons for data processing, and debugged collection and storage in AWS."
     ],
-    technologies: ["React", "TypeScript", "Web Components", "Node.js", "AWS", "Jenkins"]
+    technologies: ["React", "TypeScript", "Web Components", "Node.js", "AWS", "Jenkins", "Java"]
   },
   {
     id: "discoverorg-software-developer",
@@ -155,7 +179,7 @@ export const experiencePreview = [
   {
     company: "Animoto",
     role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021 - Present"
+    dateRange: "Mar 2021 - Mar 2026"
   },
   {
     company: "Nike",

@@ -27,7 +27,7 @@ const requiredCompanies = [
 ];
 
 const requiredDates = [
-  "Mar 2025 - Present",
+  "Mar 2025 - Mar 2026",
   "Mar 2021 - Apr 2025",
   "Feb 2018 - Mar 2021",
   "Nov 2016 - Feb 2018",
@@ -36,6 +36,7 @@ const requiredDates = [
 ];
 
 const rejectedPageText = [
+  "Private-sector experience",
   "Professional experience content will build",
   "future slice",
   "company logo",
@@ -52,6 +53,25 @@ function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function roleBlock(source, roleId, nextRoleId) {
+  const start = source.indexOf(`id: "${roleId}"`);
+  const end = nextRoleId ? source.indexOf(`id: "${nextRoleId}"`) : source.length;
+
+  assert(start !== -1, `Missing role block: ${roleId}`);
+  assert(end > start, `Missing next role block after: ${roleId}`);
+
+  return source.slice(start, end);
+}
+
+function technologiesForRole(source, roleId, nextRoleId) {
+  const block = roleBlock(source, roleId, nextRoleId);
+  const match = block.match(/technologies:\s*\[(?<items>[\s\S]*?)\]/);
+
+  assert(match?.groups?.items, `Missing technologies for role: ${roleId}`);
+
+  return Array.from(match.groups.items.matchAll(/"([^"]+)"/g), (item) => item[1]);
 }
 
 for (const filePath of requiredFiles) {
@@ -73,6 +93,19 @@ const packageJson = JSON.parse(packageJsonSource);
 assert(
   packageJson.scripts?.["test:experience"] === "node scripts/validate-experience.mjs",
   "Expected npm run test:experience to execute the experience validator"
+);
+
+assert(
+  experienceData.includes('label: "Leadership Focus"') &&
+    experienceData.includes(
+      "Leading product-minded engineering teams through ambiguity, operational complexity, and meaningful customer impact."
+    ),
+  "Expected Current Focus to be renamed Leadership Focus with requested subtext"
+);
+assert(
+  experienceData.includes('timelineHeading: "Experience"') &&
+    !experienceData.includes("Private-sector experience"),
+  "Expected Experience timeline heading without private-sector wording"
 );
 
 for (const exportName of ["experiencePage", "experienceRoles", "experienceMilitaryService"]) {
@@ -106,13 +139,56 @@ assert(
   "Expected Animoto role progression to stay adjacent and chronological before Nike"
 );
 
-// TODO: Migrate this to AST parsing; regex and quote counting can
-// miscount nested arrays, comments, or escaped quotes in future edits.
-const technologyLists = experienceData.match(/technologies:\s*\[[\s\S]*?\]/g) ?? [];
-assert(technologyLists.length >= 4, "Expected selected technologies where useful");
-for (const list of technologyLists) {
-  const itemCount = (list.match(/"/g) ?? []).length / 2;
-  assert(itemCount <= 6, "Expected selected technology lists to stay light");
+const managerTechnologies = [
+  "Ruby on Rails",
+  "AWS",
+  "Next.js",
+  "Node.js",
+  "React",
+  "TypeScript",
+  "Jira",
+  "Graphql",
+  "Github",
+  "Braintree",
+  "Agile Methodologies",
+  "AI-assisted engineering workflows"
+];
+const seniorTechnologies = [
+  "Ruby on Rails",
+  "Next.js",
+  "Node.js",
+  "react",
+  "Jira",
+  "Datadog",
+  "Github",
+  "CI/CD",
+  "AI-assisted engineering workflows"
+];
+assert(
+  JSON.stringify(technologiesForRole(experienceData, "animoto-manager", "animoto-senior-engineer")) ===
+    JSON.stringify(managerTechnologies),
+  "Expected Software Engineering Manager selected technologies to match requested list"
+);
+assert(
+  JSON.stringify(technologiesForRole(experienceData, "animoto-senior-engineer", "nike-full-stack-engineer")) ===
+    JSON.stringify(seniorTechnologies),
+  "Expected Senior Full Stack Software Engineer selected technologies to match requested list"
+);
+assert(
+  technologiesForRole(experienceData, "nike-full-stack-engineer", "discoverorg-software-developer").includes("Java"),
+  "Expected Nike selected technologies to include Java"
+);
+
+const managerBlock = roleBlock(
+  experienceData,
+  "animoto-manager",
+  "animoto-senior-engineer"
+);
+for (const presentTense of ["Leads ", "Manages ", "Develops ", "Grows "]) {
+  assert(
+    !managerBlock.includes(presentTense),
+    `Expected completed Animoto manager role to avoid present-tense phrasing: ${presentTense}`
+  );
 }
 
 for (const rejected of rejectedPageText) {
@@ -128,7 +204,7 @@ for (const snippet of [
   "experienceMilitaryService",
   "Selected Impact",
   "Selected Technologies",
-  "Private-sector experience"
+  "{experiencePage.timelineHeading}"
 ]) {
   assert(experiencePage.includes(snippet), `Missing Experience page rendering: ${snippet}`);
 }
@@ -149,8 +225,8 @@ assert(
   "Home missing experiencePreview export reference"
 );
 assert(
-  experienceData.includes("Mar 2021 - Present"),
-  "Experience data missing current date range"
+  experienceData.includes("Mar 2021 - Mar 2026"),
+  "Experience preview missing completed Animoto date range"
 );
 assert(
   !homeData.includes("Mar 2021-Mar 2026"),
