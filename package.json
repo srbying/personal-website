@@ -10,7 +10,8 @@
     "test:acceptance": "node scripts/validate-shell.mjs",
     "test:assets": "node scripts/validate-assets.mjs",
     "test:home": "node scripts/validate-home.mjs",
-    "test:resume": "node scripts/validate-resume.mjs"
+    "test:resume": "node scripts/validate-resume.mjs",
+    "test:experience": "node scripts/validate-experience.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

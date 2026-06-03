@@ -1,4 +1,5 @@
 import { resumePdf } from "./launchAssets";
+import { experiencePreview } from "./experience";
 
 export type HomeCta = {
   label: string;
@@ -45,23 +46,7 @@ export const homeHero = {
   ]
 } satisfies HomeHero;
 
-export const recentExperience = [
-  {
-    company: "Animoto",
-    role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021-Mar 2026"
-  },
-  {
-    company: "Nike",
-    role: "Full Stack Engineer",
-    dateRange: "Feb 2018-Mar 2021"
-  },
-  {
-    company: "DiscoverOrg (now ZoomInfo)",
-    role: "Software Developer",
-    dateRange: "Nov 2016-Feb 2018"
-  }
-] satisfies readonly RecentExperienceItem[];
+export const recentExperience = experiencePreview satisfies readonly RecentExperienceItem[];
 
 export const leadershipPrinciples = [
   {
