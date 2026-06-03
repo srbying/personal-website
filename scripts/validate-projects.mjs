@@ -7,6 +7,7 @@ const root = process.cwd();
 const requiredFiles = [
   "src/content.config.ts",
   "src/content/projects/aeris.mdx",
+  "src/content/projects/soilos.mdx",
   "src/pages/projects.astro",
   "src/pages/projects/[slug].astro",
   "src/data/launchAssets.ts",
@@ -38,12 +39,43 @@ const requiredAerisCopy = [
   "AI-assisted learning"
 ];
 
-const requiredScreenshots = [
+const requiredSoilosSections = [
+  "Overview",
+  "Why I Built It",
+  "Product Decisions",
+  "Technical Approach",
+  "What I Learned",
+  "Screenshots",
+  "What I'd Do Next"
+];
+
+const requiredSoilosCopy = [
+  "personal lawn-care planning app",
+  "local weather",
+  "soil data",
+  "seasonal tasks",
+  "budget tracking",
+  "progress photos",
+  "practical multi-year plan",
+  "market research",
+  "scenario comparison",
+  "budget and risk tradeoffs",
+  "product calculator"
+];
+
+const requiredAerisScreenshots = [
   "/assets/projects/aeris/chat-response.png",
   "/assets/projects/aeris/chat-loading.png",
   "/assets/projects/aeris/activity-history.png",
   "/assets/projects/aeris/trend-evidence.png",
   "/assets/projects/aeris/import-csv.png"
+];
+
+const requiredSoilosScreenshots = [
+  "/assets/projects/soilos/scenario-comparison.png",
+  "/assets/projects/soilos/calculator.png",
+  "/assets/projects/soilos/calendar-task-detail.png",
+  "/assets/projects/soilos/calendar-month.png"
 ];
 
 const rejectedProjectText = [
@@ -85,6 +117,7 @@ const [
   projectsPage,
   aerisPage,
   aerisContent,
+  soilosContent,
   launchAssets,
   styles
 ] = await Promise.all([
@@ -95,6 +128,7 @@ const [
   readProjectFile("src/pages/projects.astro"),
   readProjectFile("src/pages/projects/[slug].astro"),
   readProjectFile("src/content/projects/aeris.mdx"),
+  readProjectFile("src/content/projects/soilos.mdx"),
   readProjectFile("src/data/launchAssets.ts"),
   readProjectFile("src/styles/global.css")
 ]);
@@ -142,7 +176,19 @@ for (const snippet of [
 }
 
 assert(
-  !projectsPage.includes("projectLinks.soilos.liveApp") &&
+  projectData.includes('detailHref: "/projects/soilos/"') &&
+    projectData.includes('href: "/projects/soilos/"') &&
+    projectData.includes("projectScreenshots.soilos[0]") &&
+    projectData.includes('"local weather data"') &&
+    projectData.includes('"soil data"') &&
+    projectData.includes('"planning dashboards"'),
+  "Expected Soilos project entry to link to the detail page and use a restrained Built with line"
+);
+
+assert(
+  !projectData.includes("projectLinks.soilos.liveApp") &&
+    !projectData.includes("projectLinks.soilos.github") &&
+    !projectsPage.includes("projectLinks.soilos.liveApp") &&
     !projectsPage.includes("projectLinks.soilos.github"),
   "Expected Soilos to avoid public live/GitHub CTAs"
 );
@@ -164,18 +210,46 @@ for (const snippet of requiredAerisCopy) {
 }
 
 assert(
+  soilosContent.includes('projectId: "soilos"'),
+  "Expected Soilos content to reference projectId: soilos"
+);
+
+for (const heading of requiredSoilosSections) {
+  assert(soilosContent.includes(`## ${heading}`), `Missing Soilos section: ${heading}`);
+}
+
+for (const snippet of requiredSoilosCopy) {
+  assert(soilosContent.includes(snippet), `Missing Soilos writeup copy: ${snippet}`);
+}
+
+assert(
   aerisContent.indexOf("## Product Decisions") < aerisContent.indexOf("## Technical Approach"),
   "Expected Aeris writeup to emphasize product thinking before technical architecture"
+);
+assert(
+  soilosContent.indexOf("## Product Decisions") < soilosContent.indexOf("## Technical Approach"),
+  "Expected Soilos writeup to emphasize product thinking before technical architecture"
 );
 assert(
   aerisContent.indexOf("AI-assisted learning") > aerisContent.indexOf("## What I Learned"),
   "Expected AI-assisted learning to appear only in What I Learned"
 );
+assert(
+  !soilosContent.includes("AI-assisted learning"),
+  "Expected Soilos to omit AI-assisted learning unless it supports the story"
+);
 
-for (const screenshotPath of requiredScreenshots) {
+for (const screenshotPath of requiredAerisScreenshots) {
   assert(
     projectData.includes(screenshotPath) || aerisContent.includes(screenshotPath),
     `Expected Aeris screenshot to be used: ${screenshotPath}`
+  );
+}
+
+for (const screenshotPath of requiredSoilosScreenshots) {
+  assert(
+    projectData.includes(screenshotPath) || soilosContent.includes(screenshotPath),
+    `Expected Soilos screenshot to be used: ${screenshotPath}`
   );
 }
 
@@ -186,7 +260,7 @@ assert(
 
 for (const rejected of rejectedProjectText) {
   assert(
-    !`${projectData}\n${projectsPage}\n${aerisContent}`.toLowerCase().includes(rejected.toLowerCase()),
+    !`${projectData}\n${projectsPage}\n${aerisContent}\n${soilosContent}`.toLowerCase().includes(rejected.toLowerCase()),
     `Unexpected project placeholder/badge text remains: ${rejected}`
   );
 }
@@ -201,4 +275,4 @@ for (const className of [
   assert(styles.includes(className), `Missing project detail styling: ${className}`);
 }
 
-console.log("Issue #8 Projects Index and Aeris detail checks passed.");
+console.log("Issue #8 and #9 project checks passed.");

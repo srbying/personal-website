@@ -82,9 +82,23 @@ export const projects = [
       "A personal lawn-care planning app framed through market research, seasonal planning, budget tracking, and product thinking.",
     description:
       "Soilos explores how research, product modeling, and practical planning can make lawn-care decisions easier to compare.",
+    detailHref: "/projects/soilos/",
     previewScreenshot: projectScreenshots.soilos[0],
     screenshots: projectScreenshots.soilos,
-    actions: []
+    actions: [
+      {
+        label: "Read the story",
+        href: "/projects/soilos/",
+        isExternal: false
+      }
+    ],
+    builtWith: [
+      "Next.js",
+      "TypeScript",
+      "local weather data",
+      "soil data",
+      "planning dashboards"
+    ]
   }
 ] satisfies readonly ProjectSummary[];
 
