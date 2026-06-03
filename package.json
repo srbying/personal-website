@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "test:acceptance": "node scripts/validate-shell.mjs",
-    "test:assets": "node scripts/validate-assets.mjs"
+    "test:assets": "node scripts/validate-assets.mjs",
+    "test:home": "node scripts/validate-home.mjs"
   },
   "engines": {
     "node": ">=22.12.0"
