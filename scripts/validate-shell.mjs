@@ -42,7 +42,8 @@ assert(
   "Expected no legacy Astro content config at src/content/config.ts"
 );
 assert(
-  !existsSync(path.join(root, "src/content.config.ts")),
+  existsSync(path.join(root, "src/content/projects/aeris.mdx")) ||
+    !existsSync(path.join(root, "src/content.config.ts")),
   "Expected no Astro content collection config until real content exists"
 );
 

@@ -1,0 +1,80 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getProjectById } from "../../data/projects";
+
+type Props = {
+  entry: CollectionEntry<"projects">;
+};
+
+export async function getStaticPaths() {
+  const entries = await getCollection("projects");
+
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry }
+  }));
+}
+
+const { entry } = Astro.props;
+const project = getProjectById(entry.data.projectId);
+
+if (!project) {
+  throw new Error(`Missing project data for ${entry.data.projectId}`);
+}
+
+const { Content } = await render(entry);
+const heroScreenshot = project.previewScreenshot;
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.description}>
+  <article class="project-detail" aria-labelledby="project-detail-title">
+    <nav class="project-breadcrumb" aria-label="Project breadcrumb">
+      <a href="/projects/">Projects</a>
+      <span aria-hidden="true">/</span>
+      <span>{project.title}</span>
+    </nav>
+
+    <header class="project-detail__hero">
+      <div class="project-detail__intro">
+        <h1 id="project-detail-title">{project.title}</h1>
+        <p>{project.summary}</p>
+        {
+          project.builtWith && (
+            <p class="project-built-with">
+              <span>Built with</span> {project.builtWith.join(", ")}
+            </p>
+          )
+        }
+        <nav class="project-links" aria-label={`${project.title} links`}>
+          {
+            project.actions
+              .filter((action) => action.isExternal)
+              .map((action) => (
+                <a
+                  href={action.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {action.label}
+                </a>
+              ))
+          }
+        </nav>
+      </div>
+
+      <figure class="project-detail__media">
+        <img
+          src={heroScreenshot.path}
+          alt={heroScreenshot.alt}
+          loading="eager"
+          decoding="async"
+        />
+      </figure>
+    </header>
+
+    <div class="project-writeup">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
