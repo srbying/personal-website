@@ -56,6 +56,7 @@ import { launchNavigation, siteMetadata } from "../data/site";
     id="mobile-navigation"
     class="mobile-navigation"
     aria-label="Mobile launch navigation"
+    aria-hidden="true"
     data-open="false"
     hidden
   >
@@ -178,6 +179,9 @@ import { launchNavigation, siteMetadata } from "../data/site";
     const setOpen = (isOpen) => {
       toggle.setAttribute("aria-expanded", String(isOpen));
       toggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+      panel.setAttribute("aria-hidden", String(!isOpen));
+      panel.toggleAttribute("inert", !isOpen);
+      panel.inert = !isOpen;
       header.dataset.menuState = isOpen ? "open" : "closed";
 
       if (isOpen) {
@@ -212,6 +216,18 @@ import { launchNavigation, siteMetadata } from "../data/site";
       window.setTimeout(hidePanel, 260);
     };
 
+    const closeMenu = ({ shouldFocusToggle = false } = {}) => {
+      if (toggle.getAttribute("aria-expanded") !== "true") {
+        return;
+      }
+
+      setOpen(false);
+
+      if (shouldFocusToggle) {
+        toggle.focus({ preventScroll: true });
+      }
+    };
+
     setOpen(false);
 
     toggle.addEventListener("click", () => {
@@ -220,6 +236,12 @@ import { launchNavigation, siteMetadata } from "../data/site";
 
     panelLinks.forEach((link) => {
       link.addEventListener("click", () => setOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeMenu({ shouldFocusToggle: true });
+      }
     });
 
     const handleDesktopQueryChange = (event) => {
