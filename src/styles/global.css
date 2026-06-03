@@ -8,7 +8,7 @@
   --color-border: #d7ded2;
   --color-accent: #1f3b2e;
   --color-accent-strong: #122c21;
-  --color-resume: #d26a2e;
+  --color-resume: #a94c1f;
   --color-resume-soft: #f0c8ae;
   --shadow-soft: 0 16px 50px rgba(21, 23, 29, 0.08);
   --font-sans:
@@ -49,8 +49,9 @@ a {
 
 a:focus-visible,
 button:focus-visible {
-  outline: 3px solid rgba(31, 59, 46, 0.35);
-  outline-offset: 4px;
+  outline: 3px solid var(--color-accent-strong);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--color-cream);
 }
 
 button {
@@ -286,6 +287,10 @@ button {
     transform 180ms ease,
     border-color 180ms ease,
     padding 180ms ease;
+}
+
+.mobile-navigation[hidden] {
+  display: none;
 }
 
 .mobile-navigation[data-open="true"] {
@@ -1683,8 +1688,7 @@ button {
   *,
   *::before,
   *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    transition-property: none !important;
+    animation-name: none !important;
   }
 }
