@@ -1,6 +1,12 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { heroLandscape, resumePdf } from "../data/launchAssets";
+import {
+  closingCtas,
+  homeHero,
+  leadershipPrinciples,
+  recentExperience
+} from "../data/home";
 ---
 
 <BaseLayout title="Home">
@@ -17,35 +23,86 @@ import { heroLandscape, resumePdf } from "../data/launchAssets";
       />
     </picture>
     <div class="hero-section__content">
-      <p class="hero-kicker">Engineering Manager</p>
-      <h1>Steven Byington</h1>
-      <p>
-        Engineering Manager with 10+ years of full-stack experience. I help
-        product-minded teams build with clarity, ownership, and technical
-        judgment.
-      </p>
-      <p class="hero-proof">Engineering Manager &middot; Full-Stack Depth &middot; USMC Veteran</p>
+      <p class="hero-kicker">{homeHero.eyebrow}</p>
+      <h1>{homeHero.headline}</h1>
+      <p>{homeHero.supportingLine}</p>
+      <p class="hero-proof">{homeHero.metadata}</p>
       <div class="hero-actions" aria-label="Primary links">
-        <a class="button-link button-link--primary" href={resumePdf.path}>
-          Download My Resume
-        </a>
-        <a class="button-link" href="/experience/">See My Experience</a>
+        {
+          homeHero.ctas.map((cta) => (
+            <a
+              class:list={[
+                "button-link",
+                cta.variant === "primary" && "button-link--primary"
+              ]}
+              href={cta.href}
+              download={cta.href === resumePdf.path ? true : undefined}
+            >
+              {cta.label}
+            </a>
+          ))
+        }
       </div>
     </div>
   </section>
 
-  <section class="overview-grid" aria-label="Portfolio sections">
-    <a class="overview-card" href="/experience/">
-      <span>Experience</span>
-      <strong>Professional background and roles.</strong>
-    </a>
-    <a class="overview-card" href="/projects/">
-      <span>Projects</span>
-      <strong>Selected work and build notes.</strong>
-    </a>
-    <a class="overview-card" href="/resume/">
-      <span>Resume</span>
-      <strong>Readable page now, PDF path ready.</strong>
-    </a>
+  <section class="home-section recent-experience" aria-labelledby="recent-experience-heading">
+    <div class="section-heading">
+      <p class="section-kicker">Recent Experience</p>
+      <h2 id="recent-experience-heading">Teams, systems, and product work</h2>
+    </div>
+    <div class="recent-experience__rows">
+      {
+        recentExperience.map((item) => (
+          <article class="recent-experience__row">
+            <div>
+              <h3>{item.company}</h3>
+              <p>{item.role}</p>
+            </div>
+            <time>{item.dateRange}</time>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="home-section leadership-section" aria-labelledby="leadership-heading">
+    <div class="section-heading">
+      <p class="section-kicker">How I Lead</p>
+      <h2 id="leadership-heading">A practical operating style</h2>
+    </div>
+    <ol class="leadership-list">
+      {
+        leadershipPrinciples.map((principle) => (
+          <li>
+            <h3>{principle.title}</h3>
+            <p>{principle.sentence}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="home-close" aria-labelledby="home-close-heading">
+    <div>
+      <p class="section-kicker">Resume and contact</p>
+      <h2 id="home-close-heading">Want the concise version?</h2>
+    </div>
+    <div class="hero-actions home-close__actions" aria-label="Resume and contact links">
+      {
+        closingCtas.map((cta) => (
+          <a
+            class:list={[
+              "button-link",
+              cta.variant === "primary" && "button-link--primary"
+            ]}
+            href={cta.href}
+            download={cta.href === resumePdf.path ? true : undefined}
+          >
+            {cta.label}
+          </a>
+        ))
+      }
+    </div>
   </section>
 </BaseLayout>
