@@ -9,6 +9,7 @@ const requiredFiles = [
   "src/content/projects/aeris.mdx",
   "src/pages/projects.astro",
   "src/pages/projects/[slug].astro",
+  "src/data/launchAssets.ts",
   "src/data/projects.ts",
   "src/styles/global.css"
 ];
@@ -104,7 +105,13 @@ assert(
   packageJson.scripts?.["test:projects"] === "node scripts/validate-projects.mjs",
   "Expected npm run test:projects to execute the projects validator"
 );
-assert(Boolean(packageJson.dependencies?.["@astrojs/mdx"]), "Expected @astrojs/mdx dependency");
+assert(
+  Boolean(
+    packageJson.dependencies?.["@astrojs/mdx"] ||
+      packageJson.devDependencies?.["@astrojs/mdx"]
+  ),
+  "Expected @astrojs/mdx dependency"
+);
 assert(astroConfig.includes("mdx()"), "Expected Astro MDX integration");
 assert(
   contentConfig.includes("defineCollection") &&
