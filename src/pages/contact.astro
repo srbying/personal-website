@@ -17,8 +17,7 @@ const orderedContactLinks = [
   <section class="page-section contact-section">
     <h1>Contact</h1>
     <p>
-      Direct contact paths for email, professional profile, code profile, and
-      the standard resume artifact.
+      The best way to reach me is by email. You can also find me on LinkedIn.
     </p>
     <dl class="contact-list">
       {
@@ -29,7 +28,7 @@ const orderedContactLinks = [
               <a
                 href={link.href}
                 target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
-                rel={link.isExternal && !link.href.startsWith("mailto:") ? "noreferrer" : undefined}
+                rel={link.isExternal && !link.href.startsWith("mailto:") ? "noopener noreferrer" : undefined}
                 download={!link.isExternal && link.href.endsWith(".pdf") ? true : undefined}
               >
                 {link.displayText}
