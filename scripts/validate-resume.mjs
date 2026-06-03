@@ -1,8 +1,10 @@
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import siteConfig from "../src/data/siteConfig.json" with { type: "json" };
 
 const root = process.cwd();
+const resumePdfPublicFile = `public${siteConfig.resumePdfRoute}`;
 
 const requiredFiles = [
   "src/data/resume.ts",
@@ -10,7 +12,7 @@ const requiredFiles = [
   "src/pages/resume.astro",
   "src/styles/global.css",
   "src/data/launchAssets.ts",
-  "public/resume/steven-byington-resume.pdf"
+  resumePdfPublicFile
 ];
 
 const requiredResumeData = [
@@ -108,7 +110,8 @@ assert(
 );
 
 assert(
-  manifest.includes("/resume/steven-byington-resume.pdf"),
+  existsSync(path.join(root, resumePdfPublicFile)) &&
+    manifest.includes("path: siteConfig.resumePdfRoute"),
   "Expected resume PDF to be served from the descriptive public path"
 );
 assert(
