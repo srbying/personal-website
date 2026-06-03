@@ -1,0 +1,66 @@
+---
+title: "Soilos"
+description: "A personal lawn-care planning app using local weather, soil data, seasonal tasks, budget tracking, and progress photos to support a practical multi-year plan."
+projectId: "soilos"
+---
+
+## Overview
+
+Soilos is a personal lawn-care planning app using local weather, soil data, seasonal tasks, budget tracking, and progress photos to support a practical multi-year plan. It turns a messy home-maintenance problem into a planning surface: what should happen next, why now, what it costs, and how the plan changes across seasons.
+
+The app is demoed here through real screenshots instead of a live link because the working product is auth-gated. That keeps the portfolio story honest while still showing the product model, research decisions, and day-to-day utility behind the project.
+
+## Why I Built It
+
+I wanted a more deliberate way to improve a lawn over multiple seasons without relying on scattered notes, store advice, and one-off reminders. Lawn care looks simple from the outside, but the useful decisions depend on timing, soil conditions, weather windows, product math, and budget tolerance.
+
+Soilos became a focused personal utility: research the market, compare common approaches, and build a small system that helps me choose a plan I can actually follow.
+
+## Product Decisions
+
+The market research pointed to a gap between generic lawn-care calendars and high-touch paid services. I wanted something in the middle: practical enough for one homeowner, but structured enough to explain why a task belonged on the calendar.
+
+The core product decision was making scenario comparison the starting point. Instead of jumping straight into tasks, Soilos compares multi-year strategies by annual cost, application count, expected improvement pace, and budget and risk tradeoffs. Choosing a scenario then shapes the calendar.
+
+The product calculator supports another everyday decision: whether a specific bag, analysis, cost, and lawn size make sense before buying or applying it. That keeps the app grounded in real product labels rather than abstract recommendations.
+
+## Technical Approach
+
+Soilos is built with Next.js, TypeScript, local weather data, soil data, and planning dashboards. The app models the lawn as a profile with size, seasonal tasks, scenario assumptions, weather-sensitive timing, product inputs, budget tracking, and progress photos.
+
+The planning model keeps recommendations explainable. Calendar tasks include a reason, condition trigger, estimated effort, scheduled date, and completion state. Scenario data keeps cost and application frequency visible so the user can understand the tradeoff before committing to a plan.
+
+The detail views are intentionally practical: task sheets can override dates, record products, and mark work complete; calculator inputs translate product labels into application math; calendar views make the seasonal plan easier to follow.
+
+## What I Learned
+
+The biggest lesson was that useful planning software needs opinionated constraints. A long list of possible lawn tasks is less helpful than a small number of choices tied to cost, timing, and conditions.
+
+I also learned that personal utility apps still need product framing. The app became stronger when I treated market research, scenario design, and budget visibility as product requirements rather than extra context.
+
+## Screenshots
+
+<div class="project-screenshot-grid">
+  <figure>
+    <img src="/assets/projects/soilos/scenario-comparison.png" alt="Soilos three-year scenario comparison dashboard." />
+    <figcaption>Scenario comparison makes annual cost, application count, and risk visible before choosing a plan.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/projects/soilos/calculator.png" alt="Soilos product and application-rate calculator screen." />
+    <figcaption>Product calculator turns label data, bag cost, and lawn size into application planning inputs.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/projects/soilos/calendar-task-detail.png" alt="Soilos calendar task detail sheet for spring compost." />
+    <figcaption>Task detail sheets explain timing, condition triggers, effort, product entry, and completion.</figcaption>
+  </figure>
+  <figure>
+    <img src="/assets/projects/soilos/calendar-month.png" alt="Soilos monthly calendar view with scheduled lawn-care tasks." />
+    <figcaption>Calendar view keeps seasonal tasks visible inside the active multi-year plan.</figcaption>
+  </figure>
+</div>
+
+## What I'd Do Next
+
+The next version would make local condition data more useful after tasks are completed. I would connect progress photos, completed applications, and soil changes into a clearer before-and-after timeline.
+
+After that, I would add better plan adjustment rules: reschedule around weather, surface skipped-task consequences, and make budget tracking easier to compare across years.
