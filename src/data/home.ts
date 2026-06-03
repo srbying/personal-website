@@ -49,7 +49,7 @@ export const recentExperience = [
   {
     company: "Animoto",
     role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021-2026"
+    dateRange: "Mar 2021-Mar 2026"
   },
   {
     company: "Nike",
@@ -72,7 +72,7 @@ export const leadershipPrinciples = [
   {
     title: "Accountability",
     sentence:
-      "I set direct expectations and follow through with the same standards I ask of the team."
+      "I treat accountability as a shared standard: own the outcome, keep the team informed, and close the loop."
   },
   {
     title: "Ownership",

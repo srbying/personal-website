@@ -29,7 +29,7 @@ const recentExperience = [
   {
     company: "Animoto",
     role: "Senior Full Stack Software Engineer to Software Engineering Manager",
-    dateRange: "Mar 2021-2026"
+    dateRange: "Mar 2021-Mar 2026"
   },
   {
     company: "Nike",
@@ -50,6 +50,14 @@ const leadershipPrinciples = [
   "Calm Under Pressure",
   "Respectful Candor",
   "Technical Judgment"
+];
+
+const marineCorpsLeadershipPattern =
+  /shared standard.*own the outcome.*close the loop/is;
+const blockedProjectMarkers = [
+  'href="/projects/"',
+  "overview-card",
+  "projects-section"
 ];
 
 async function readProjectFile(filePath) {
@@ -109,7 +117,7 @@ for (const { company, role, dateRange } of recentExperience) {
   assert(homeData.includes(dateRange), `Missing recent experience dates: ${dateRange}`);
 }
 
-const principleMatches = homeData.match(/title:/g) ?? [];
+const principleMatches = homeData.match(/^\s+title: "/gm) ?? [];
 assert(
   principleMatches.length >= leadershipPrinciples.length,
   "Expected leadership principles to be represented as typed items"
@@ -118,6 +126,11 @@ assert(
 for (const principle of leadershipPrinciples) {
   assert(homeData.includes(principle), `Missing leadership principle: ${principle}`);
 }
+
+assert(
+  marineCorpsLeadershipPattern.test(homeData),
+  "Expected one leadership principle sentence to translate Marine Corps influence into civilian terms"
+);
 
 assert(
   homeData.includes("leadershipPrinciples") && homePage.includes("leadershipPrinciples"),
@@ -132,9 +145,7 @@ assert(
   "Expected homepage to render focused closing CTAs"
 );
 assert(
-  !homePage.includes('href="/projects/"') &&
-    !homePage.includes("overview-card") &&
-    !homePage.includes("Project"),
+  blockedProjectMarkers.every((marker) => !homePage.includes(marker)),
   "Expected projects to stay off the homepage"
 );
 
