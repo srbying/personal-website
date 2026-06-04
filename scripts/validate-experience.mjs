@@ -167,7 +167,7 @@ const seniorTechnologies = [
   "Ruby on Rails",
   "Next.js",
   "Node.js",
-  "react",
+  "React",
   "Jira",
   "Datadog",
   "Github",
