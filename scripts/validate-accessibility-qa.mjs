@@ -205,7 +205,7 @@ for (const source of pageSources) {
 
   for (const imageTag of imageTags) {
     assert(
-      /\salt=/.test(imageTag),
+      /\balt=/.test(imageTag),
       `Expected every page image to provide alt text: ${imageTag}`
     );
   }

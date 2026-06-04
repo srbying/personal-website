@@ -74,6 +74,15 @@ function technologiesForRole(source, roleId, nextRoleId) {
   return Array.from(match.groups.items.matchAll(/"([^"]+)"/g), (item) => item[1]);
 }
 
+function cssRule(source, selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = source.match(new RegExp(`${escapedSelector}\\s*{(?<body>[^}]*)}`));
+
+  assert(match?.groups?.body, `Missing CSS rule: ${selector}`);
+
+  return match.groups.body;
+}
+
 for (const filePath of requiredFiles) {
   assert(existsSync(path.join(root, filePath)), `Missing required file: ${filePath}`);
 }
@@ -103,9 +112,10 @@ assert(
   "Expected Current Focus to be renamed Leadership Focus with requested subtext"
 );
 assert(
-  experienceData.includes('timelineHeading: "Experience"') &&
+  !experienceData.includes("timelineHeading") &&
+    !experienceData.includes("timelineLead") &&
     !experienceData.includes("Private-sector experience"),
-  "Expected Experience timeline heading without private-sector wording"
+  "Expected Experience timeline to render without a separate intro heading or subheading"
 );
 
 for (const exportName of ["experiencePage", "experienceRoles", "experienceMilitaryService"]) {
@@ -126,7 +136,7 @@ for (const dateRange of requiredDates) {
 
 assert(
   experienceData.includes("United States Marine Corps Reserve") &&
-    experienceData.includes("Fire Team Leader & Radio Operator, Command Center"),
+    experienceData.includes("Fire Team Leader & Radio Operator"),
   "Expected Military Service data to stay separate from private-sector roles"
 );
 
@@ -203,11 +213,27 @@ for (const snippet of [
   "experienceRoles",
   "experienceMilitaryService",
   "Selected Impact",
-  "Selected Technologies",
-  "{experiencePage.timelineHeading}"
+  "Selected Technologies"
 ]) {
   assert(experiencePage.includes(snippet), `Missing Experience page rendering: ${snippet}`);
 }
+
+assert(
+  !experiencePage.includes("experience-section__heading") &&
+    !experiencePage.includes("timelineLead") &&
+    !experiencePage.includes("experience-heading"),
+  "Expected hero divider to flow directly into the experience timeline"
+);
+
+const experienceSectionRule = cssRule(styles, ".experience-section");
+const experienceTimelineRule = cssRule(styles, ".experience-timeline");
+assert(
+  experienceSectionRule.includes("padding-block: 0;") &&
+    experienceSectionRule.includes("border-block-end: 1px solid var(--color-border);") &&
+    experienceTimelineRule.includes("display: grid;") &&
+    !experienceTimelineRule.includes("border-block-start"),
+  "Expected one hero divider before timeline with no extra top border or padding"
+);
 
 assert(
   experienceData.includes("Military Service") &&

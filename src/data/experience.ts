@@ -6,8 +6,6 @@ export type ExperiencePageContent = {
     label: string;
     value: string;
   }[];
-  timelineHeading: string;
-  timelineLead: string;
   militaryHeading: string;
 };
 
@@ -31,9 +29,9 @@ export type ExperiencePreviewItem = {
 
 export const experiencePage = {
   kicker: "Experience",
-  title: "Role history with product-minded impact",
+  title: "Engineering depth. Leadership scope",
   lead:
-    "A focused look at Steven's engineering path, role progression, selected impact, and the leadership foundation that shapes how he manages teams.",
+    "A focused look at my engineering path, role progression, selected impact, and the leadership foundation that shapes how I manage teams.",
   facts: [
     {
       label: "Leadership Focus",
@@ -49,9 +47,6 @@ export const experiencePage = {
       value: "USMC veteran with a calm, accountable operating style"
     }
   ],
-  timelineHeading: "Experience",
-  timelineLead:
-    "Recent roles keep month-and-year dates for chronology. Earlier consulting work stays compact while preserving the shape of the path.",
   militaryHeading: "Military Service"
 } satisfies ExperiencePageContent;
 
@@ -194,7 +189,7 @@ export const experiencePreview = [
 ] satisfies readonly ExperiencePreviewItem[];
 
 export const experienceMilitaryService = {
-  role: "Fire Team Leader & Radio Operator, Command Center",
+  role: "Fire Team Leader & Radio Operator",
   organization: "United States Marine Corps Reserve",
   dateRange: "2003 - 2009",
   summary:
