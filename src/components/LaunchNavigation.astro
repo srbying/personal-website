@@ -1,6 +1,14 @@
 ---
 import { brandAssets } from "../data/launchAssets";
 import { launchNavigation, siteMetadata } from "../data/site";
+
+const currentPath = Astro.url.pathname.endsWith("/")
+  ? Astro.url.pathname
+  : `${Astro.url.pathname}/`;
+
+function isActiveNavigationItem(href: string): boolean {
+  return href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+}
 ---
 
 <header class="site-header" data-launch-navigation data-menu-state="closed">
@@ -29,9 +37,10 @@ import { launchNavigation, siteMetadata } from "../data/site";
         <a
           class:list={[
             "navigation-link",
-            { "navigation-link--highlight": item.isHighlighted }
+            { "navigation-link--active": isActiveNavigationItem(item.href) }
           ]}
           href={item.href}
+          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
         >
           {item.label}
         </a>
@@ -56,6 +65,7 @@ import { launchNavigation, siteMetadata } from "../data/site";
     id="mobile-navigation"
     class="mobile-navigation"
     aria-label="Mobile launch navigation"
+    aria-hidden="true"
     data-open="false"
     hidden
   >
@@ -64,9 +74,10 @@ import { launchNavigation, siteMetadata } from "../data/site";
         <a
           class:list={[
             "mobile-navigation-link",
-            { "mobile-navigation-link--highlight": item.isHighlighted }
+            { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
           ]}
           href={item.href}
+          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
         >
           {item.label}
         </a>
@@ -178,6 +189,9 @@ import { launchNavigation, siteMetadata } from "../data/site";
     const setOpen = (isOpen) => {
       toggle.setAttribute("aria-expanded", String(isOpen));
       toggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation");
+      panel.setAttribute("aria-hidden", String(!isOpen));
+      panel.toggleAttribute("inert", !isOpen);
+      panel.inert = !isOpen;
       header.dataset.menuState = isOpen ? "open" : "closed";
 
       if (isOpen) {
@@ -212,6 +226,18 @@ import { launchNavigation, siteMetadata } from "../data/site";
       window.setTimeout(hidePanel, 260);
     };
 
+    const closeMenu = ({ shouldFocusToggle = false } = {}) => {
+      if (toggle.getAttribute("aria-expanded") !== "true") {
+        return;
+      }
+
+      setOpen(false);
+
+      if (shouldFocusToggle) {
+        toggle.focus({ preventScroll: true });
+      }
+    };
+
     setOpen(false);
 
     toggle.addEventListener("click", () => {
@@ -220,6 +246,12 @@ import { launchNavigation, siteMetadata } from "../data/site";
 
     panelLinks.forEach((link) => {
       link.addEventListener("click", () => setOpen(false));
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeMenu({ shouldFocusToggle: true });
+      }
     });
 
     const handleDesktopQueryChange = (event) => {

@@ -33,6 +33,16 @@ function assert(condition, message) {
   }
 }
 
+function cssRule(source, selector, context = "") {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const contextPattern = context ? `${context}[\\s\\S]*?` : "";
+  const match = source.match(new RegExp(`${contextPattern}${escapedSelector}\\s*{(?<body>[^}]*)}`));
+
+  assert(match?.groups?.body, `Missing CSS rule: ${selector}`);
+
+  return match.groups.body;
+}
+
 for (const filePath of requiredFiles) {
   assert(existsSync(path.join(root, filePath)), `Missing required file: ${filePath}`);
 }
@@ -78,7 +88,10 @@ assert(
   navIndexes.every((index, position) => position === 0 || index > navIndexes[position - 1]),
   "Expected launch navigation order: Home, Experience, Projects, Resume, Contact"
 );
-assert(siteData.includes("isHighlighted: true"), "Expected Resume navigation to be subtly highlighted");
+assert(
+  !siteData.includes("isHighlighted: true"),
+  "Expected navigation highlight to be route-driven, not hard-coded to Resume"
+);
 for (const label of footerLabels) {
   assert(siteData.includes(`label: "${label}"`), `Expected footer link label: ${label}`);
 }
@@ -89,7 +102,20 @@ assert(layout.includes("id=\"main-content\""), "Expected main content target for
 assert(layout.includes("SiteFooter"), "Expected shared footer in base layout");
 assert(layout.includes("LaunchNavigation"), "Expected shared launch navigation in base layout");
 
+const styles = await readProjectFile("src/styles/global.css");
+const mainContentRule = cssRule(styles, ".site-main");
+const mobileMainContentRule = cssRule(styles, ".site-main", "@media \\(max-width: 520px\\)");
+assert(
+  mainContentRule.includes("padding-block: 0 5rem;") &&
+    mobileMainContentRule.includes("padding-block: 0 4rem;"),
+  "Expected #main-content/site-main to have no top padding across desktop and mobile"
+);
+
 const navigation = await readProjectFile("src/components/LaunchNavigation.astro");
+assert(
+  navigation.includes("aria-current") && navigation.includes("navigation-link--active"),
+  "Expected navigation active state to use aria-current and active classes"
+);
 assert(navigation.includes("aria-expanded=\"false\""), "Expected accessible mobile menu disclosure state");
 assert(navigation.includes("aria-controls=\"mobile-navigation\""), "Expected mobile menu controls relationship");
 assert(navigation.includes("prefers-reduced-motion: reduce"), "Expected reduced-motion-aware menu behavior");

@@ -28,7 +28,7 @@ const htmlPages = [
     path: "/projects/",
     title: "Projects | Steven Byington",
     description:
-      "Selected projects by Steven Byington, including Aeris fitness analytics and Soilos lawn-care planning."
+      "Selected projects by Steven Byington, including Aeris fitness analytics and SoilOS lawn-care planning."
   },
   {
     filePath: "dist/projects/aeris/index.html",
@@ -40,7 +40,7 @@ const htmlPages = [
   {
     filePath: "dist/projects/soilos/index.html",
     path: "/projects/soilos/",
-    title: "Soilos | Steven Byington",
+    title: "SoilOS | Steven Byington",
     description:
       "A personal lawn-care planning app using local weather, soil data, seasonal tasks, budget tracking, and progress photos to support a practical multi-year plan."
   },

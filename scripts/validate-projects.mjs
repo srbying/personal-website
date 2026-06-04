@@ -72,6 +72,7 @@ const requiredAerisScreenshots = [
 ];
 
 const requiredSoilosScreenshots = [
+  "/assets/projects/soilos/action-status.png",
   "/assets/projects/soilos/scenario-comparison.png",
   "/assets/projects/soilos/calculator.png",
   "/assets/projects/soilos/calendar-task-detail.png",
@@ -178,11 +179,13 @@ for (const snippet of [
 assert(
   projectData.includes('detailHref: "/projects/soilos/"') &&
     projectData.includes('href: "/projects/soilos/"') &&
+    projectData.includes('title: "SoilOS"') &&
     projectData.includes("projectScreenshots.soilos[0]") &&
+    launchAssets.includes('path: "/assets/projects/soilos/action-status.png"') &&
     projectData.includes('"local weather data"') &&
     projectData.includes('"soil data"') &&
     projectData.includes('"planning dashboards"'),
-  "Expected Soilos project entry to link to the detail page and use a restrained Built with line"
+  "Expected SoilOS project entry to use approved preview screenshot, link to detail, and use a restrained Built with line"
 );
 
 assert(
@@ -210,8 +213,10 @@ for (const snippet of requiredAerisCopy) {
 }
 
 assert(
-  soilosContent.includes('projectId: "soilos"'),
-  "Expected Soilos content to reference projectId: soilos"
+  soilosContent.includes('title: "SoilOS"') &&
+    soilosContent.includes('projectId: "soilos"') &&
+    soilosContent.includes("SoilOS is a personal lawn-care planning app"),
+  "Expected SoilOS content to use requested display spelling and reference projectId: soilos"
 );
 
 for (const heading of requiredSoilosSections) {
@@ -248,7 +253,9 @@ for (const screenshotPath of requiredAerisScreenshots) {
 
 for (const screenshotPath of requiredSoilosScreenshots) {
   assert(
-    projectData.includes(screenshotPath) || soilosContent.includes(screenshotPath),
+    projectData.includes(screenshotPath) ||
+      soilosContent.includes(screenshotPath) ||
+      launchAssets.includes(screenshotPath),
     `Expected Soilos screenshot to be used: ${screenshotPath}`
   );
 }
