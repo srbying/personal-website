@@ -82,11 +82,12 @@ export const resumeSkillGroups = [
   {
     group: "Backend",
     skills: [
+      "Java",
       "Node.js",
       "Ruby",
+      "Ruby on Rails",
+      "Graphql",
       "API design",
-      "Swagger",
-      "MyBatis",
       "Data processing"
     ]
   },

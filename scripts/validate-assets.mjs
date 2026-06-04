@@ -24,6 +24,7 @@ const requiredPublicAssets = [
   "public/assets/projects/aeris/activity-history.png",
   "public/assets/projects/aeris/trend-evidence.png",
   "public/assets/projects/aeris/import-csv.png",
+  "public/assets/projects/soilos/action-status.png",
   "public/assets/projects/soilos/scenario-comparison.png",
   "public/assets/projects/soilos/calculator.png",
   "public/assets/projects/soilos/calendar-task-detail.png",
@@ -66,8 +67,9 @@ assert(
   "Expected the resume PDF to be marked supplied and approved"
 );
 assert(
-  docs.includes("city-level location text"),
-  "Expected Soilos location-bearing screenshot to be documented as withheld"
+  manifest.includes("User-supplied replacement screenshot approved on 2026-06-03") &&
+    docs.includes("location-bearing screenshot explicitly approved by Steven on 2026-06-03"),
+  "Expected SoilOS location-bearing replacement screenshot to be explicitly approved"
 );
 
 console.log("Issue #3 launch asset checks passed.");

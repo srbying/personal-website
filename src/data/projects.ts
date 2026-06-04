@@ -77,11 +77,11 @@ export const projects = [
   },
   {
     id: "soilos",
-    title: "Soilos",
+    title: "SoilOS",
     summary:
       "A personal lawn-care planning app framed through market research, seasonal planning, budget tracking, and product thinking.",
     description:
-      "Soilos explores how research, product modeling, and practical planning can make lawn-care decisions easier to compare.",
+      "SoilOS explores how research, product modeling, and practical planning can make lawn-care decisions easier to compare.",
     detailHref: "/projects/soilos/",
     previewScreenshot: projectScreenshots.soilos[0],
     screenshots: projectScreenshots.soilos,

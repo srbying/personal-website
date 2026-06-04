@@ -31,13 +31,7 @@ import {
     </dl>
   </section>
 
-  <section class="experience-section" aria-labelledby="private-sector-heading">
-    <div class="experience-section__heading">
-      <p class="section-kicker">Private-sector experience</p>
-      <h2 id="private-sector-heading">{experiencePage.timelineHeading}</h2>
-      <p>{experiencePage.timelineLead}</p>
-    </div>
-
+  <section class="experience-section" aria-label="Experience timeline">
     <div class="experience-timeline">
       {
         experienceRoles.map((role) => (
@@ -56,7 +50,7 @@ import {
             <div class="experience-role__body">
               <header class="experience-role__header">
                 <p class="experience-role__company">{role.company}</p>
-                <h3 id={`role-${role.id}`}>{role.role}</h3>
+                <h2 id={`role-${role.id}`}>{role.role}</h2>
                 {role.context && <p class="experience-role__context">{role.context}</p>}
               </header>
 
@@ -64,7 +58,7 @@ import {
 
               <div class="experience-role__details">
                 <section aria-labelledby={`role-${role.id}-impact`}>
-                  <h4 id={`role-${role.id}-impact`}>Selected Impact</h4>
+                  <h3 id={`role-${role.id}-impact`}>Selected Impact</h3>
                   <ul>
                     {role.impacts.map((impact) => <li>{impact}</li>)}
                   </ul>
@@ -73,7 +67,7 @@ import {
                 {
                   role.technologies?.length && (
                     <section aria-labelledby={`role-${role.id}-technologies`}>
-                      <h4 id={`role-${role.id}-technologies`}>Selected Technologies</h4>
+                      <h3 id={`role-${role.id}-technologies`}>Selected Technologies</h3>
                       <p class="experience-role__technologies">
                         {role.technologies.join(", ")}
                       </p>
