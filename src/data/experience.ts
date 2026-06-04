@@ -103,7 +103,7 @@ export const experienceRoles = [
       "Ruby on Rails",
       "Next.js",
       "Node.js",
-      "react",
+      "React",
       "Jira",
       "Datadog",
       "Github",
