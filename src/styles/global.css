@@ -120,7 +120,7 @@ button {
   flex: 1;
   width: min(100% - 2rem, var(--max-width));
   margin-inline: auto;
-  padding-block: 4rem 5rem;
+  padding-block: 0 5rem;
   scroll-margin-top: 5rem;
 }
 
@@ -387,7 +387,6 @@ button {
   min-height: min(64vh, 43rem);
   align-items: end;
   margin-inline: calc(50% - 50vw);
-  margin-block-start: -4rem;
   overflow: hidden;
   padding:
     clamp(4.5rem, 9vw, 7rem)
@@ -942,7 +941,7 @@ button {
 }
 
 .experience-section {
-  padding-block: clamp(3rem, 6vw, 4.75rem);
+  padding-block: 0;
   border-block-end: 1px solid var(--color-border);
 }
 
@@ -970,7 +969,6 @@ button {
 
 .experience-timeline {
   display: grid;
-  border-block-start: 1px solid var(--color-border);
 }
 
 .experience-role {
@@ -1022,7 +1020,7 @@ button {
   font-weight: 850;
 }
 
-.experience-role h3,
+.experience-role h2,
 .experience-military h3 {
   margin: 0;
   color: var(--color-text);
@@ -1049,7 +1047,7 @@ button {
   margin-block-start: 1.15rem;
 }
 
-.experience-role h4 {
+.experience-role h3 {
   margin: 0;
   color: var(--color-resume);
   font-size: 0.8rem;
@@ -1473,7 +1471,7 @@ button {
 @media (max-width: 520px) {
   .site-main {
     width: min(100% - 1.25rem, var(--max-width));
-    padding-block: 2.8rem 4rem;
+    padding-block: 0 4rem;
   }
 
   .site-header {
@@ -1483,7 +1481,6 @@ button {
 
   .hero-section {
     min-height: 58vh;
-    margin-block-start: -2.8rem;
   }
 
   .hero-section h1,

@@ -33,6 +33,16 @@ function assert(condition, message) {
   }
 }
 
+function cssRule(source, selector, context = "") {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const contextPattern = context ? `${context}[\\s\\S]*?` : "";
+  const match = source.match(new RegExp(`${contextPattern}${escapedSelector}\\s*{(?<body>[^}]*)}`));
+
+  assert(match?.groups?.body, `Missing CSS rule: ${selector}`);
+
+  return match.groups.body;
+}
+
 for (const filePath of requiredFiles) {
   assert(existsSync(path.join(root, filePath)), `Missing required file: ${filePath}`);
 }
@@ -91,6 +101,15 @@ assert(layout.includes("href=\"#main-content\""), "Expected skip link target");
 assert(layout.includes("id=\"main-content\""), "Expected main content target for skip link");
 assert(layout.includes("SiteFooter"), "Expected shared footer in base layout");
 assert(layout.includes("LaunchNavigation"), "Expected shared launch navigation in base layout");
+
+const styles = await readProjectFile("src/styles/global.css");
+const mainContentRule = cssRule(styles, ".site-main");
+const mobileMainContentRule = cssRule(styles, ".site-main", "@media \\(max-width: 520px\\)");
+assert(
+  mainContentRule.includes("padding-block: 0 5rem;") &&
+    mobileMainContentRule.includes("padding-block: 0 4rem;"),
+  "Expected #main-content/site-main to have no top padding across desktop and mobile"
+);
 
 const navigation = await readProjectFile("src/components/LaunchNavigation.astro");
 assert(

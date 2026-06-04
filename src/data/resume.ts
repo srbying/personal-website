@@ -80,7 +80,7 @@ export const resumeSkillGroups = [
     ]
   },
   {
-    group: "Java",
+    group: "Backend",
     skills: [
       "Java",
       "Node.js",
@@ -88,8 +88,6 @@ export const resumeSkillGroups = [
       "Ruby on Rails",
       "Graphql",
       "API design",
-      "Swagger",
-      "MyBatis",
       "Data processing"
     ]
   },
