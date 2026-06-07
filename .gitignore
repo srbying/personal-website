@@ -4,5 +4,7 @@ CONTEXT.md
 
 .DS_Store
 .astro/
+.vercel/
 dist/
 node_modules/
+.vercel
