@@ -53,21 +53,25 @@ function getNavigationAnalytics(item: { href: string }) {
 
   <nav class="desktop-navigation" aria-label="Launch navigation">
     {
-      launchNavigation.map((item) => (
-        <a
-          class:list={[
-            "navigation-link",
-            { "navigation-link--active": isActiveNavigationItem(item.href) }
-          ]}
-          href={item.href}
-          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
-          data-analytics-event={getNavigationAnalytics(item)?.event}
-          data-analytics-location={getNavigationAnalytics(item)?.location}
-          data-analytics-target={getNavigationAnalytics(item)?.target}
-        >
-          {item.label}
-        </a>
-      ))
+      launchNavigation.map((item) => {
+        const analytics = getNavigationAnalytics(item);
+
+        return (
+          <a
+            class:list={[
+              "navigation-link",
+              { "navigation-link--active": isActiveNavigationItem(item.href) }
+            ]}
+            href={item.href}
+            aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+            data-analytics-event={analytics?.event}
+            data-analytics-location={analytics?.location}
+            data-analytics-target={analytics?.target}
+          >
+            {item.label}
+          </a>
+        );
+      })
     }
   </nav>
 
@@ -93,21 +97,25 @@ function getNavigationAnalytics(item: { href: string }) {
     hidden
   >
     {
-      launchNavigation.map((item) => (
-        <a
-          class:list={[
-            "mobile-navigation-link",
-            { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
-          ]}
-          href={item.href}
-          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
-          data-analytics-event={getNavigationAnalytics(item)?.event}
-          data-analytics-location={getNavigationAnalytics(item)?.location}
-          data-analytics-target={getNavigationAnalytics(item)?.target}
-        >
-          {item.label}
-        </a>
-      ))
+      launchNavigation.map((item) => {
+        const analytics = getNavigationAnalytics(item);
+
+        return (
+          <a
+            class:list={[
+              "mobile-navigation-link",
+              { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
+            ]}
+            href={item.href}
+            aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+            data-analytics-event={analytics?.event}
+            data-analytics-location={analytics?.location}
+            data-analytics-target={analytics?.target}
+          >
+            {item.label}
+          </a>
+        );
+      })
     }
   </nav>
 </header>

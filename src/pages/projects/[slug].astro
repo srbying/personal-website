@@ -1,7 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getProjectById, type ProjectAction } from "../../data/projects";
+import { buildProjectAnalytics, getProjectById } from "../../data/projects";
 
 type Props = {
   entry: CollectionEntry<"projects">;
@@ -25,18 +25,6 @@ if (!project) {
 
 const { Content } = await render(entry);
 const heroScreenshot = project.previewScreenshot;
-
-function getProjectDetailActionAnalytics(action: ProjectAction) {
-  const target = project.id === "aeris" ? "aeris" : "soilos";
-
-  return {
-    event: "project_click",
-    location: "project_page",
-    target,
-    secondaryEvent: action.href.includes("github.com") ? "github_click" : undefined,
-    secondaryTarget: action.href.includes("github.com") ? "github" : undefined
-  };
-}
 ---
 
 <BaseLayout
@@ -66,20 +54,24 @@ function getProjectDetailActionAnalytics(action: ProjectAction) {
           {
             project.actions
               .filter((action) => action.isExternal)
-              .map((action) => (
-                <a
-                  href={action.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-analytics-event={getProjectDetailActionAnalytics(action).event}
-                  data-analytics-location={getProjectDetailActionAnalytics(action).location}
-                  data-analytics-target={getProjectDetailActionAnalytics(action).target}
-                  data-analytics-secondary-event={getProjectDetailActionAnalytics(action).secondaryEvent}
-                  data-analytics-secondary-target={getProjectDetailActionAnalytics(action).secondaryTarget}
-                >
-                  {action.label}
-                </a>
-              ))
+              .map((action) => {
+                const analytics = buildProjectAnalytics(project, action, "project_page");
+
+                return (
+                  <a
+                    href={action.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-analytics-event={analytics.event}
+                    data-analytics-location={analytics.location}
+                    data-analytics-target={analytics.target}
+                    data-analytics-secondary-event={analytics.secondaryEvent}
+                    data-analytics-secondary-target={analytics.secondaryTarget}
+                  >
+                    {action.label}
+                  </a>
+                );
+              })
           }
         </nav>
       </div>

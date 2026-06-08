@@ -13,6 +13,7 @@ const requiredFiles = [
   "src/pages/contact.astro",
   "src/pages/projects.astro",
   "src/pages/projects/[slug].astro",
+  "src/data/projects.ts",
   "src/components/SiteFooter.astro",
   "docs/analytics-setup.md",
   "package.json"
@@ -116,6 +117,7 @@ const [
   contactPage,
   projectsPage,
   projectDetailPage,
+  projectData,
   footer,
   docs,
   packageJsonSource
@@ -156,6 +158,7 @@ const sourceWithTrackedLinks = [
   contactPage,
   projectsPage,
   projectDetailPage,
+  projectData,
   footer
 ].join("\n");
 
@@ -175,7 +178,7 @@ for (const target of [
   assertIncludes(sourceWithTrackedLinks, target, `Missing analytics target: ${target}`);
 }
 
-for (const location of ["hero", "footer", "resume_page", "project_card"]) {
+for (const location of ["hero", "nav", "footer", "resume_page", "project_card"]) {
   assertIncludes(sourceWithTrackedLinks, location, `Missing analytics location: ${location}`);
 }
 
@@ -190,6 +193,11 @@ for (const forbidden of ["Plausible", "Vercel Analytics", "Ahrefs", "trial"]) {
 const hasGaEnv = Boolean(process.env.PUBLIC_GA4_MEASUREMENT_ID);
 const hasClarityEnv = Boolean(process.env.PUBLIC_MICROSOFT_CLARITY_PROJECT_ID);
 const hasVerificationEnv = Boolean(process.env.PUBLIC_GOOGLE_SITE_VERIFICATION);
+const hasProductionBuild =
+  existsSync(path.join(root, "dist/index.html")) &&
+  existsSync(path.join(root, "dist/sitemap.xml"));
+
+assert(hasProductionBuild, "No dist/ directory found. Run 'npm run build' first.");
 
 for (const { filePath, events } of distExpectations) {
   assert(existsSync(path.join(root, filePath)), `Missing built page: ${filePath}`);
