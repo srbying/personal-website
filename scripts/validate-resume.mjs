@@ -59,7 +59,7 @@ const sectionOrder = [
 ];
 
 const rejectedPrivateStrings = [
-  "srbyington@gmail.com",
+  "steven@stevenbyington.me",
   "(971)",
   "971",
   "331-5101",
@@ -117,7 +117,7 @@ assert(
   "Expected resume PDF to be served from the descriptive public path"
 );
 assert(
-  manifest.includes("srbyington@gmail.com"),
+  manifest.includes("steven@stevenbyington.me"),
   "Expected Resume contact paths to use the confirmed public email"
 );
 assert(
