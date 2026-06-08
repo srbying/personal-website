@@ -94,8 +94,8 @@ assertInOrder(
 );
 
 for (const snippet of [
-  'href: "mailto:srbyington@gmail.com"',
-  'displayText: "srbyington@gmail.com"',
+  'href: "mailto:steven@stevenbyington.me"',
+  'displayText: "steven@stevenbyington.me"',
   'href: "https://www.linkedin.com/in/stevenbyington/"',
   'href: "https://github.com/srbying"',
   'href: resumePdf.path'
