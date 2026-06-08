@@ -89,7 +89,7 @@ export const experienceRoles = [
     id: "animoto-senior-engineer",
     company: "Animoto",
     role: "Senior Full Stack Software Engineer",
-    dateRange: "Mar 2021 - Apr 2025",
+    dateRange: "Mar 2021 - Mar 2025",
     progressionLabel: "Animoto progression",
     summary:
       "Served as engineer, Scrum Master, and technical lead on high-visibility product initiatives while building leadership credibility across delivery and architecture.",
