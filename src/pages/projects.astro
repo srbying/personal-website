@@ -1,9 +1,21 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { projects } from "../data/projects";
+import { projects, type ProjectAction, type ProjectSummary } from "../data/projects";
 
 const intro =
   "A small set of personal tools and experiments built to solve real problems, explore product ideas, and deepen technical judgment.";
+
+function getProjectActionAnalytics(project: ProjectSummary, action: ProjectAction) {
+  const target = project.id === "aeris" ? "aeris" : "soilos";
+
+  return {
+    event: "project_click",
+    location: "project_card",
+    target,
+    secondaryEvent: action.href.includes("github.com") ? "github_click" : undefined,
+    secondaryTarget: action.href.includes("github.com") ? "github" : undefined
+  };
+}
 ---
 
 <BaseLayout
@@ -29,6 +41,11 @@ const intro =
                         href={action.href}
                         target={action.isExternal ? "_blank" : undefined}
                         rel={action.isExternal ? "noopener noreferrer" : undefined}
+                        data-analytics-event={getProjectActionAnalytics(project, action).event}
+                        data-analytics-location={getProjectActionAnalytics(project, action).location}
+                        data-analytics-target={getProjectActionAnalytics(project, action).target}
+                        data-analytics-secondary-event={getProjectActionAnalytics(project, action).secondaryEvent}
+                        data-analytics-secondary-target={getProjectActionAnalytics(project, action).secondaryTarget}
                       >
                         {action.label}
                       </a>

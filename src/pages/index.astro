@@ -5,9 +5,26 @@ import {
   closingCtas,
   homeHero,
   leadershipPrinciples,
-  recentExperience
+  recentExperience,
+  type HomeCta
 } from "../data/home";
 import { structuredIdentityMetadata } from "../data/site";
+
+function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
+  if (cta.href === resumePdf.path) {
+    return { event: "resume_download", location, target: "resume_pdf" };
+  }
+
+  if (cta.href === "/experience/") {
+    return { event: "impact_click", location, target: "selected_impact" };
+  }
+
+  if (cta.href === "/contact/") {
+    return { event: "contact_click", location, target: "email" };
+  }
+
+  return undefined;
+}
 ---
 
 <BaseLayout
@@ -43,6 +60,9 @@ import { structuredIdentityMetadata } from "../data/site";
               ]}
               href={cta.href}
               download={cta.href === resumePdf.path ? true : undefined}
+              data-analytics-event={getHomeCtaAnalytics(cta, "hero")?.event}
+              data-analytics-location={getHomeCtaAnalytics(cta, "hero")?.location}
+              data-analytics-target={getHomeCtaAnalytics(cta, "hero")?.target}
             >
               {cta.label}
             </a>
@@ -104,6 +124,9 @@ import { structuredIdentityMetadata } from "../data/site";
             ]}
             href={cta.href}
             download={cta.href === resumePdf.path ? true : undefined}
+            data-analytics-event={getHomeCtaAnalytics(cta, "home_close")?.event}
+            data-analytics-location={getHomeCtaAnalytics(cta, "home_close")?.location}
+            data-analytics-target={getHomeCtaAnalytics(cta, "home_close")?.target}
           >
             {cta.label}
           </a>

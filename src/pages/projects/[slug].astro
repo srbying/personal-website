@@ -1,7 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getProjectById } from "../../data/projects";
+import { getProjectById, type ProjectAction } from "../../data/projects";
 
 type Props = {
   entry: CollectionEntry<"projects">;
@@ -25,6 +25,18 @@ if (!project) {
 
 const { Content } = await render(entry);
 const heroScreenshot = project.previewScreenshot;
+
+function getProjectDetailActionAnalytics(action: ProjectAction) {
+  const target = project.id === "aeris" ? "aeris" : "soilos";
+
+  return {
+    event: "project_click",
+    location: "project_page",
+    target,
+    secondaryEvent: action.href.includes("github.com") ? "github_click" : undefined,
+    secondaryTarget: action.href.includes("github.com") ? "github" : undefined
+  };
+}
 ---
 
 <BaseLayout
@@ -59,6 +71,11 @@ const heroScreenshot = project.previewScreenshot;
                   href={action.href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  data-analytics-event={getProjectDetailActionAnalytics(action).event}
+                  data-analytics-location={getProjectDetailActionAnalytics(action).location}
+                  data-analytics-target={getProjectDetailActionAnalytics(action).target}
+                  data-analytics-secondary-event={getProjectDetailActionAnalytics(action).secondaryEvent}
+                  data-analytics-secondary-target={getProjectDetailActionAnalytics(action).secondaryTarget}
                 >
                   {action.label}
                 </a>

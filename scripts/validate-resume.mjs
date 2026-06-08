@@ -117,7 +117,7 @@ assert(
   "Expected resume PDF to be served from the descriptive public path"
 );
 assert(
-  manifest.includes("hello@stevenbyington.com"),
+  manifest.includes("srbyington@gmail.com"),
   "Expected Resume contact paths to use the confirmed public email"
 );
 assert(

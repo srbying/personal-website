@@ -9,6 +9,26 @@ const currentPath = Astro.url.pathname.endsWith("/")
 function isActiveNavigationItem(href: string): boolean {
   return href === "/" ? currentPath === "/" : currentPath.startsWith(href);
 }
+
+function getNavigationAnalytics(item: { href: string }) {
+  if (item.href === "/experience/") {
+    return {
+      event: "impact_click",
+      location: "nav",
+      target: "selected_impact"
+    };
+  }
+
+  if (item.href === "/contact/") {
+    return {
+      event: "contact_click",
+      location: "nav",
+      target: "email"
+    };
+  }
+
+  return undefined;
+}
 ---
 
 <header class="site-header" data-launch-navigation data-menu-state="closed">
@@ -41,6 +61,9 @@ function isActiveNavigationItem(href: string): boolean {
           ]}
           href={item.href}
           aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+          data-analytics-event={getNavigationAnalytics(item)?.event}
+          data-analytics-location={getNavigationAnalytics(item)?.location}
+          data-analytics-target={getNavigationAnalytics(item)?.target}
         >
           {item.label}
         </a>
@@ -78,6 +101,9 @@ function isActiveNavigationItem(href: string): boolean {
           ]}
           href={item.href}
           aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+          data-analytics-event={getNavigationAnalytics(item)?.event}
+          data-analytics-location={getNavigationAnalytics(item)?.location}
+          data-analytics-target={getNavigationAnalytics(item)?.target}
         >
           {item.label}
         </a>
