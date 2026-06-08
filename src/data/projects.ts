@@ -24,6 +24,25 @@ export type ProjectSummary = {
   builtWith?: readonly string[];
 };
 
+export type ProjectAnalyticsLocation = "project_card" | "project_page";
+
+export function buildProjectAnalytics(
+  project: ProjectSummary,
+  action: ProjectAction,
+  location: ProjectAnalyticsLocation
+) {
+  const target = project.id === "aeris" ? "aeris" : "soilos";
+  const isGithubLink = action.href.includes("github.com");
+
+  return {
+    event: "project_click",
+    location,
+    target,
+    secondaryEvent: isGithubLink ? "github_click" : undefined,
+    secondaryTarget: isGithubLink ? "github" : undefined
+  };
+}
+
 function externalProjectAction(link: PublicLink): ProjectAction | undefined {
   if (!hasConfirmedHref(link)) {
     return undefined;

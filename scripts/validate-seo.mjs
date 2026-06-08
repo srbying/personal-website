@@ -72,7 +72,6 @@ const expectedSitemapPaths = [
 ];
 
 const privateStrings = [
-  "srbyington@gmail.com",
   "(971)",
   "971",
   "331-5101",

@@ -15,6 +15,7 @@
     "test:contact": "node scripts/validate-contact.mjs",
     "test:projects": "node scripts/validate-projects.mjs",
     "test:seo": "node scripts/validate-seo.mjs",
+    "test:analytics": "node scripts/validate-analytics.mjs",
     "test:accessibility": "node scripts/validate-accessibility-qa.mjs"
   },
   "engines": {

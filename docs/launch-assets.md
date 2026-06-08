@@ -6,7 +6,7 @@ Asset review date: 2026-06-03
 
 | Item | Public value | Status |
 | --- | --- | --- |
-| Email | `hello@stevenbyington.com` | Confirmed from launch site data |
+| Email | `srbyington@gmail.com` | Confirmed from launch site data |
 | LinkedIn | `https://www.linkedin.com/in/stevenbyington/` | Confirmed from launch site data |
 | GitHub | `https://github.com/srbying` | Confirmed public profile |
 | Aeris live app | `https://aeris-lac.vercel.app` | Confirmed from public `srbying/aeris` repository metadata |

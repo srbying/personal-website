@@ -7,14 +7,38 @@ import {
   resumeHeader,
   resumeMilitaryService,
   resumeSkillGroups,
-  resumeSummary
+  resumeSummary,
+  type ResumeContactLink
 } from "../data/resume";
+
+function getResumeContactAnalytics(link: ResumeContactLink) {
+  if (link.href.startsWith("mailto:")) {
+    return { event: "email_click", target: "email" };
+  }
+
+  if (link.href.includes("linkedin.com")) {
+    return { event: "linkedin_click", target: "linkedin" };
+  }
+
+  if (link.href.includes("github.com")) {
+    return { event: "github_click", target: "github" };
+  }
+
+  if (link.href === resumeHeader.pdfPath) {
+    return { event: "resume_download", target: "resume_pdf" };
+  }
+
+  return undefined;
+}
 ---
 
 <BaseLayout
   title="Resume"
   description="HTML resume for Steven Byington, Software Engineering Manager with full-stack product engineering, leadership, and military experience."
   canonicalPath="/resume/"
+  analyticsPageEvent="resume_view"
+  analyticsPageLocation="resume_page"
+  analyticsPageTarget="resume_pdf"
 >
   <section class="resume-hero" aria-labelledby="resume-title">
     <div class="resume-hero__content">
@@ -29,6 +53,9 @@ import {
         class="button-link button-link--primary"
         href={resumeHeader.pdfPath}
         download
+        data-analytics-event="resume_download"
+        data-analytics-location="resume_page"
+        data-analytics-target="resume_pdf"
       >
         {resumeHeader.pdfLabel}
       </a>
@@ -141,6 +168,9 @@ import {
                     target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
                     rel={link.isExternal && !link.href.startsWith("mailto:") ? "noreferrer" : undefined}
                     download={link.href === resumeHeader.pdfPath ? true : undefined}
+                    data-analytics-event={getResumeContactAnalytics(link)?.event}
+                    data-analytics-location="resume_page"
+                    data-analytics-target={getResumeContactAnalytics(link)?.target}
                   >
                     {link.displayText}
                   </a>

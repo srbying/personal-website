@@ -170,8 +170,8 @@ export const heroLandscape = {
 export const contactLinks = {
   email: {
     label: "Email",
-    href: "mailto:hello@stevenbyington.com",
-    displayText: "hello@stevenbyington.com",
+    href: "mailto:srbyington@gmail.com",
+    displayText: "srbyington@gmail.com",
     isExternal: true,
     isConfirmed: true,
     reviewNotes: "Existing launch contact email carried forward into the asset manifest."

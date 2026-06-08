@@ -2,6 +2,7 @@
 import LaunchNavigation from "../components/LaunchNavigation.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import { siteMetadata } from "../data/site";
+import { analyticsClientScript } from "../scripts/analytics";
 import "../styles/global.css";
 
 type Props = {
@@ -10,6 +11,9 @@ type Props = {
   canonicalPath?: string;
   structuredData?: unknown;
   robots?: string;
+  analyticsPageEvent?: string;
+  analyticsPageLocation?: string;
+  analyticsPageTarget?: string;
 };
 
 const {
@@ -17,9 +21,47 @@ const {
   description = siteMetadata.description,
   canonicalPath = Astro.url.pathname,
   structuredData,
-  robots
+  robots,
+  analyticsPageEvent,
+  analyticsPageLocation,
+  analyticsPageTarget
 } = Astro.props;
 
+const ga4MeasurementId = import.meta.env.PUBLIC_GA4_MEASUREMENT_ID;
+const clarityProjectId = import.meta.env.PUBLIC_MICROSOFT_CLARITY_PROJECT_ID;
+const googleSiteVerification = import.meta.env.PUBLIC_GOOGLE_SITE_VERIFICATION;
+const shouldRenderGa4 = import.meta.env.PROD && Boolean(ga4MeasurementId);
+const shouldRenderClarity = import.meta.env.PROD && Boolean(clarityProjectId);
+const ga4ScriptUrl = ga4MeasurementId
+  ? `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4MeasurementId)}`
+  : undefined;
+const ga4MeasurementIdJson = ga4MeasurementId
+  ? JSON.stringify(ga4MeasurementId).replaceAll("<", "\\u003c")
+  : undefined;
+const clarityProjectIdJson = clarityProjectId
+  ? JSON.stringify(clarityProjectId).replaceAll("<", "\\u003c")
+  : undefined;
+const ga4InitScript = ga4MeasurementIdJson
+  ? `
+window.dataLayer = window.dataLayer || [];
+function gtag(){window.dataLayer.push(arguments);}
+window.gtag = window.gtag || gtag;
+gtag("js", new Date());
+gtag("config", ${ga4MeasurementIdJson});
+`
+  : undefined;
+const clarityScript = clarityProjectIdJson
+  ? `
+(function(c,l,a,r,i,t,y){
+  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments);};
+  t=l.createElement(r);
+  t.async=1;
+  t.src="https://www.clarity.ms/tag/"+i;
+  y=l.getElementsByTagName(r)[0];
+  y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", ${clarityProjectIdJson});
+`
+  : undefined;
 const pageTitle =
   title.includes(siteMetadata.name)
     ? title
@@ -39,6 +81,7 @@ const structuredDataJson = structuredData
     <meta name="description" content={description} />
     <meta name="author" content={siteMetadata.author} />
     {robots && <meta name="robots" content={robots} />}
+    {googleSiteVerification && <meta name="google-site-verification" content={googleSiteVerification} />}
     <link rel="canonical" href={canonicalUrl} />
     <meta property="og:locale" content={siteMetadata.locale} />
     <meta property="og:site_name" content={siteMetadata.siteName} />
@@ -52,6 +95,9 @@ const structuredDataJson = structuredData
     <meta property="og:image:height" content="630" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png" />
+    {shouldRenderGa4 && ga4ScriptUrl && <script async src={ga4ScriptUrl} is:inline />}
+    {shouldRenderGa4 && ga4InitScript && <script is:inline set:html={ga4InitScript} />}
+    {shouldRenderClarity && clarityScript && <script is:inline set:html={clarityScript} />}
     {
       structuredDataJson && (
         <script type="application/ld+json" set:html={structuredDataJson} />
@@ -59,7 +105,11 @@ const structuredDataJson = structuredData
     }
     <title>{pageTitle}</title>
   </head>
-  <body>
+  <body
+    data-analytics-page-event={analyticsPageEvent}
+    data-analytics-page-location={analyticsPageLocation}
+    data-analytics-page-target={analyticsPageTarget}
+  >
     <a class="skip-link" href="#main-content" data-skip-link>Skip to content</a>
     <div class="site-shell">
       <LaunchNavigation />
@@ -113,5 +163,6 @@ const structuredDataJson = structuredData
 
       document.addEventListener("astro:page-load", setupSkipLink);
     </script>
+    {shouldRenderGa4 && <script is:inline set:html={analyticsClientScript} />}
   </body>
 </html>

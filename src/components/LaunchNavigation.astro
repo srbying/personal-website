@@ -9,6 +9,26 @@ const currentPath = Astro.url.pathname.endsWith("/")
 function isActiveNavigationItem(href: string): boolean {
   return href === "/" ? currentPath === "/" : currentPath.startsWith(href);
 }
+
+function getNavigationAnalytics(item: { href: string }) {
+  if (item.href === "/experience/") {
+    return {
+      event: "impact_click",
+      location: "nav",
+      target: "selected_impact"
+    };
+  }
+
+  if (item.href === "/contact/") {
+    return {
+      event: "contact_click",
+      location: "nav",
+      target: "email"
+    };
+  }
+
+  return undefined;
+}
 ---
 
 <header class="site-header" data-launch-navigation data-menu-state="closed">
@@ -33,18 +53,25 @@ function isActiveNavigationItem(href: string): boolean {
 
   <nav class="desktop-navigation" aria-label="Launch navigation">
     {
-      launchNavigation.map((item) => (
-        <a
-          class:list={[
-            "navigation-link",
-            { "navigation-link--active": isActiveNavigationItem(item.href) }
-          ]}
-          href={item.href}
-          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
-        >
-          {item.label}
-        </a>
-      ))
+      launchNavigation.map((item) => {
+        const analytics = getNavigationAnalytics(item);
+
+        return (
+          <a
+            class:list={[
+              "navigation-link",
+              { "navigation-link--active": isActiveNavigationItem(item.href) }
+            ]}
+            href={item.href}
+            aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+            data-analytics-event={analytics?.event}
+            data-analytics-location={analytics?.location}
+            data-analytics-target={analytics?.target}
+          >
+            {item.label}
+          </a>
+        );
+      })
     }
   </nav>
 
@@ -70,18 +97,25 @@ function isActiveNavigationItem(href: string): boolean {
     hidden
   >
     {
-      launchNavigation.map((item) => (
-        <a
-          class:list={[
-            "mobile-navigation-link",
-            { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
-          ]}
-          href={item.href}
-          aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
-        >
-          {item.label}
-        </a>
-      ))
+      launchNavigation.map((item) => {
+        const analytics = getNavigationAnalytics(item);
+
+        return (
+          <a
+            class:list={[
+              "mobile-navigation-link",
+              { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
+            ]}
+            href={item.href}
+            aria-current={isActiveNavigationItem(item.href) ? "page" : undefined}
+            data-analytics-event={analytics?.event}
+            data-analytics-location={analytics?.location}
+            data-analytics-target={analytics?.target}
+          >
+            {item.label}
+          </a>
+        );
+      })
     }
   </nav>
 </header>
