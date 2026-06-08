@@ -28,7 +28,7 @@ const requiredCompanies = [
 
 const requiredDates = [
   "Mar 2025 - Mar 2026",
-  "Mar 2021 - Apr 2025",
+  "Mar 2021 - Mar 2025",
   "Feb 2018 - Mar 2021",
   "Nov 2016 - Feb 2018",
   "Mar 2015 - Nov 2016",
