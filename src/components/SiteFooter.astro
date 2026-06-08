@@ -1,7 +1,27 @@
 ---
-import { footerLinks, siteMetadata } from "../data/site";
+import { footerLinks, siteMetadata, type FooterLink } from "../data/site";
 
 const year = new Date().getFullYear();
+
+function getFooterAnalytics(link: FooterLink) {
+  if (link.href.startsWith("mailto:")) {
+    return { event: "email_click", target: "email" };
+  }
+
+  if (link.href.includes("linkedin.com")) {
+    return { event: "linkedin_click", target: "linkedin" };
+  }
+
+  if (link.href.includes("github.com")) {
+    return { event: "github_click", target: "github" };
+  }
+
+  if (link.href.endsWith(".pdf")) {
+    return { event: "resume_download", target: "resume_pdf" };
+  }
+
+  return undefined;
+}
 ---
 
 <footer class="site-footer">
@@ -12,16 +32,23 @@ const year = new Date().getFullYear();
 
     <nav class="site-footer__links" aria-label="Footer links">
       {
-        footerLinks.map((link) => (
-          <a
-            href={link.href}
-            target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
-            rel={link.isExternal && !link.href.startsWith("mailto:") ? "noopener noreferrer" : undefined}
-            download={!link.isExternal && link.href.endsWith(".pdf") ? true : undefined}
-          >
-            {link.label}
-          </a>
-        ))
+        footerLinks.map((link) => {
+          const analytics = getFooterAnalytics(link);
+
+          return (
+            <a
+              href={link.href}
+              target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
+              rel={link.isExternal && !link.href.startsWith("mailto:") ? "noopener noreferrer" : undefined}
+              download={!link.isExternal && link.href.endsWith(".pdf") ? true : undefined}
+              data-analytics-event={analytics?.event}
+              data-analytics-location="footer"
+              data-analytics-target={analytics?.target}
+            >
+              {link.label}
+            </a>
+          );
+        })
       }
     </nav>
   </div>

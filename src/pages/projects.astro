@@ -1,6 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { projects } from "../data/projects";
+import { buildProjectAnalytics, projects } from "../data/projects";
 
 const intro =
   "A small set of personal tools and experiments built to solve real problems, explore product ideas, and deepen technical judgment.";
@@ -24,15 +24,24 @@ const intro =
               {
                 project.actions.length > 0 && (
                   <nav class="project-links" aria-label={`${project.title} links`}>
-                    {project.actions.map((action) => (
-                      <a
-                        href={action.href}
-                        target={action.isExternal ? "_blank" : undefined}
-                        rel={action.isExternal ? "noopener noreferrer" : undefined}
-                      >
-                        {action.label}
-                      </a>
-                    ))}
+                    {project.actions.map((action) => {
+                      const analytics = buildProjectAnalytics(project, action, "project_card");
+
+                      return (
+                        <a
+                          href={action.href}
+                          target={action.isExternal ? "_blank" : undefined}
+                          rel={action.isExternal ? "noopener noreferrer" : undefined}
+                          data-analytics-event={analytics.event}
+                          data-analytics-location={analytics.location}
+                          data-analytics-target={analytics.target}
+                          data-analytics-secondary-event={analytics.secondaryEvent}
+                          data-analytics-secondary-target={analytics.secondaryTarget}
+                        >
+                          {action.label}
+                        </a>
+                      );
+                    })}
                   </nav>
                 )
               }

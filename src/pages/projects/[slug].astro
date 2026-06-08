@@ -1,7 +1,7 @@
 ---
 import { getCollection, render, type CollectionEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getProjectById } from "../../data/projects";
+import { buildProjectAnalytics, getProjectById } from "../../data/projects";
 
 type Props = {
   entry: CollectionEntry<"projects">;
@@ -54,15 +54,24 @@ const heroScreenshot = project.previewScreenshot;
           {
             project.actions
               .filter((action) => action.isExternal)
-              .map((action) => (
-                <a
-                  href={action.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {action.label}
-                </a>
-              ))
+              .map((action) => {
+                const analytics = buildProjectAnalytics(project, action, "project_page");
+
+                return (
+                  <a
+                    href={action.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-analytics-event={analytics.event}
+                    data-analytics-location={analytics.location}
+                    data-analytics-target={analytics.target}
+                    data-analytics-secondary-event={analytics.secondaryEvent}
+                    data-analytics-secondary-target={analytics.secondaryTarget}
+                  >
+                    {action.label}
+                  </a>
+                );
+              })
           }
         </nav>
       </div>
