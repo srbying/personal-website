@@ -75,7 +75,7 @@ export const aboutOutsideWorkParagraphs = [
   "The Marines taught me that leadership is earned through service. You take care of your people, and they take care of the mission.",
   "Running taught me patience. You don't run a marathon on race day. You build toward it week by week, track your progress honestly, and trust the work.",
   "I try to bring that same discipline to team-building. Small improvements add up. So does trust.",
-  "Outside of work, I play guitar, am learning mandolin, read when I can, and watch a lot of movies. Magnolia is my favorite. I live in Northeast Ohio with my family, and we spend a lot of time on hikes, at amusement parks, and finding small adventures close to home."
+  "Outside of work, I play guitar, wanting to learn mandolin, read when I can, and watch a lot of movies. Magnolia is my favorite. I live in Northeast Ohio with my family, and we spend a lot of time on hikes, at amusement parks, and finding small adventures close to home."
 ] satisfies readonly string[];
 
 export const aboutClosingCtas = [
