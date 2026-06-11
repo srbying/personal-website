@@ -25,18 +25,16 @@ const contactOrder = [
 
 const footerLabels = ["Email", "LinkedIn", "GitHub", "Resume PDF"];
 
+const usStateAbbreviationPattern =
+  "A[LKZR]|C[AOT]|D[EC]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEHINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AIT]|W[AIVY]";
+
 const rejectedContactText = [
   "<form",
   "opportunity",
   "phone",
   "physical location",
   "public location",
-  "address",
-  "beaverton",
-  "portland",
-  "oregon",
-  "(971)",
-  "331-5101"
+  "address"
 ];
 
 async function readProjectFile(filePath) {
@@ -55,6 +53,37 @@ function assertInOrder(source, snippets, message) {
   assert(
     indexes.every((index, position) => position === 0 || index > indexes[position - 1]),
     message
+  );
+}
+
+function normalizePrivacySource(source) {
+  return source
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function assertNoPrivateContactDetails(source) {
+  const normalizedSource = normalizePrivacySource(source);
+
+  assert(!/\btel:/i.test(source), "Contact page must not expose telephone links");
+  assert(
+    !/(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]\d{3}[-.\s]\d{4}/.test(
+      normalizedSource
+    ),
+    "Contact page must not expose phone-number-like text"
+  );
+  assert(
+    !/\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|court|ct|circle|cir|way)\b/i.test(
+      normalizedSource
+    ),
+    "Contact page must not expose street-address-like text"
+  );
+  assert(
+    !new RegExp(
+      `\\b[A-Z][A-Za-z.'-]+(?:\\s+[A-Z][A-Za-z.'-]+){0,2},\\s+(?:${usStateAbbreviationPattern})\\b`
+    ).test(normalizedSource),
+    "Contact page must not expose city-and-state-style text"
   );
 }
 
@@ -109,6 +138,7 @@ for (const rejected of rejectedContactText) {
     `Contact page must not expose or pitch: ${rejected}`
   );
 }
+assertNoPrivateContactDetails(contactPage);
 
 assert(
   contactPage.includes('target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}'),

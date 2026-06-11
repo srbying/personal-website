@@ -6,6 +6,12 @@ import siteConfig from "../src/data/siteConfig.json" with { type: "json" };
 const root = process.cwd();
 const { siteUrl, resumePdfRoute } = siteConfig;
 const openGraphImage = `${siteUrl}/assets/brand/open-graph.png`;
+const aboutRoute = "/about/";
+const aboutTitle = "About | Steven Byington";
+const aboutDescription =
+  "About Steven Byington's engineering leadership, full-stack experience, Marine Corps foundation, and personal operating style.";
+const usStateAbbreviationPattern =
+  "A[LKZR]|C[AOT]|D[EC]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEHINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AIT]|W[AIVY]";
 
 const htmlPages = [
   {
@@ -18,10 +24,9 @@ const htmlPages = [
   },
   {
     filePath: "dist/about/index.html",
-    path: "/about/",
-    title: "About | Steven Byington",
-    description:
-      "About Steven Byington's engineering leadership, full-stack experience, Marine Corps foundation, and personal operating style."
+    path: aboutRoute,
+    title: aboutTitle,
+    description: aboutDescription
   },
   {
     filePath: "dist/experience/index.html",
@@ -79,16 +84,6 @@ const expectedSitemapPaths = [
   resumePdfRoute
 ];
 
-const privateStrings = [
-  "(971)",
-  "971",
-  "331-5101",
-  "Beaverton, OR",
-  "Portland",
-  "Oregon",
-  "Remote"
-];
-
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -101,6 +96,51 @@ async function readProjectFile(filePath) {
 
 function absoluteUrl(routePath) {
   return new URL(routePath, siteUrl).href;
+}
+
+function assertInOrder(source, snippets, message) {
+  const indexes = snippets.map((snippet) => source.indexOf(snippet));
+
+  assert(indexes.every((index) => index !== -1), message);
+  assert(
+    indexes.every((index, position) => position === 0 || index > indexes[position - 1]),
+    message
+  );
+}
+
+function countOccurrences(source, snippet) {
+  return source.split(snippet).length - 1;
+}
+
+function normalizePrivacySource(source) {
+  return source
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function assertNoPrivateLocationOrPhone(source, label) {
+  const normalizedSource = normalizePrivacySource(source);
+
+  assert(!/\btel:/i.test(source), `${label} must not expose telephone links`);
+  assert(
+    !/(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]\d{3}[-.\s]\d{4}/.test(
+      normalizedSource
+    ),
+    `${label} must not expose phone-number-like text`
+  );
+  assert(
+    !/\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|court|ct|circle|cir|way)\b/i.test(
+      normalizedSource
+    ),
+    `${label} must not expose street-address-like text`
+  );
+  assert(
+    !new RegExp(
+      `\\b[A-Z][A-Za-z.'-]+(?:\\s+[A-Z][A-Za-z.'-]+){0,2},\\s+(?:${usStateAbbreviationPattern})\\b`
+    ).test(normalizedSource),
+    `${label} must not expose city-and-state-style text`
+  );
 }
 
 function assertMeta(html, name, content) {
@@ -164,12 +204,7 @@ for (const page of htmlPages) {
   assertHeadMetadata(page, html);
 
   const privateSource = html.replaceAll("United States Marine Corps", "");
-  for (const privateString of privateStrings) {
-    assert(
-      !privateSource.includes(privateString),
-      `Public SEO HTML must not expose private detail: ${privateString}`
-    );
-  }
+  assertNoPrivateLocationOrPhone(privateSource, `Public SEO HTML for ${page.path}`);
 }
 
 const homeHtml = await readProjectFile("dist/index.html");
@@ -197,6 +232,7 @@ for (const forbiddenKey of ["email", "telephone", "address", "homeLocation", "bi
 
 assert(existsSync(path.join(root, "dist/sitemap.xml")), "Missing generated sitemap.xml");
 const sitemap = await readProjectFile("dist/sitemap.xml");
+const aboutSitemapUrl = `<loc>${absoluteUrl(aboutRoute)}</loc>`;
 
 for (const routePath of expectedSitemapPaths) {
   assert(
@@ -205,6 +241,10 @@ for (const routePath of expectedSitemapPaths) {
   );
 }
 
+assert(
+  countOccurrences(sitemap, aboutSitemapUrl) === 1,
+  "Sitemap must include the About route exactly once"
+);
 assert(!sitemap.includes("/404"), "Sitemap must not include 404 route");
 assert(!sitemap.includes("/blog"), "Sitemap must not include blog routes before Writing exists");
 
@@ -231,7 +271,47 @@ assert(
 assert(existsSync(path.join(root, `public${resumePdfRoute}`)), "Missing public Resume PDF");
 assert(existsSync(path.join(root, `dist${resumePdfRoute}`)), "Missing built Resume PDF");
 
-const validatorSource = await readProjectFile("scripts/validate-seo.mjs");
+const [validatorSource, siteData, aboutData, aboutPageSource, sitemapSource] =
+  await Promise.all([
+    readProjectFile("scripts/validate-seo.mjs"),
+    readProjectFile("src/data/site.ts"),
+    readProjectFile("src/data/about.ts"),
+    readProjectFile("src/pages/about.astro"),
+    readProjectFile("src/pages/sitemap.xml.ts")
+  ]);
+
+const launchRoutesBlock =
+  siteData.match(/export const launchRoutes = \[[\s\S]*?\] as const;/)?.[0] ?? "";
+
+assert(
+  launchRoutesBlock.includes(`"${aboutRoute}"`),
+  "Shared launchRoutes must include the About route"
+);
+assertInOrder(
+  launchRoutesBlock,
+  ['"/"', `"${aboutRoute}"`, '"/experience/"'],
+  "Shared launchRoutes must keep About between Home and Experience"
+);
+assert(
+  siteData.includes("export const sitemapRoutes = [...launchRoutes, resumePdfRoute] as const;"),
+  "Shared sitemapRoutes must derive from launchRoutes and resumePdfRoute"
+);
+assert(
+  aboutData.includes(`canonicalPath: "${aboutRoute}"`) &&
+    aboutData.includes(`title: "About"`) &&
+    aboutData.includes(aboutDescription),
+  "About data must keep page-specific title, description, and canonical route"
+);
+assert(
+  aboutPageSource.includes("canonicalPath={aboutPage.canonicalPath}"),
+  "About page must pass shared canonicalPath into BaseLayout"
+);
+assert(
+  sitemapSource.includes("sitemapRoutes") &&
+    sitemapSource.includes("toAbsoluteUrl") &&
+    !sitemapSource.includes(siteUrl),
+  "Sitemap route generation must use shared sitemapRoutes and toAbsoluteUrl"
+);
 assert(
   !/const\s+siteUrl\s*=\s*["']https:/.test(validatorSource),
   "SEO validator must import siteUrl from shared config"
