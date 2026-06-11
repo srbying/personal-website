@@ -4,6 +4,7 @@ import siteConfig from "./siteConfig.json";
 export type LaunchNavigationItem = {
   label: string;
   href: string;
+  variant?: "primary";
 };
 
 export type FooterLink = {
@@ -45,6 +46,7 @@ export const siteMetadata = {
 
 export const launchRoutes = [
   "/",
+  "/about/",
   "/experience/",
   "/projects/",
   "/projects/aeris/",
@@ -68,9 +70,10 @@ export const structuredIdentityMetadata = {
 
 export const launchNavigation = [
   { label: "Home", href: "/" },
+  { label: "About", href: "/about/" },
   { label: "Experience", href: "/experience/" },
   { label: "Projects", href: "/projects/" },
-  { label: "Resume", href: "/resume/" },
+  { label: "Resume", href: "/resume/", variant: "primary" },
   { label: "Contact", href: "/contact/" }
 ] satisfies readonly LaunchNavigationItem[];
 

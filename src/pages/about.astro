@@ -1,0 +1,93 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  aboutClosingCtas,
+  aboutLeadershipBeliefs,
+  aboutOpeningParagraphs,
+  aboutOutsideWorkParagraphs,
+  aboutPage,
+  type AboutCta
+} from "../data/about";
+import { resumePdfRoute } from "../data/site";
+
+function getAboutCtaAnalytics(cta: AboutCta) {
+  if (cta.href === resumePdfRoute) {
+    return { event: "resume_download", target: "resume_pdf" };
+  }
+
+  if (cta.href === "/contact/") {
+    return { event: "contact_click", target: "email" };
+  }
+
+  return undefined;
+}
+---
+
+<BaseLayout
+  title={aboutPage.title}
+  description={aboutPage.description}
+  canonicalPath={aboutPage.canonicalPath}
+>
+  <section class="about-hero" aria-labelledby="about-title">
+    <div class="about-hero__heading">
+      <p class="section-kicker">{aboutPage.kicker}</p>
+      <h1 id="about-title">{aboutPage.headline}</h1>
+    </div>
+    <div class="about-copy about-hero__copy">
+      {aboutOpeningParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+  </section>
+
+  <section class="about-section" aria-labelledby="about-leadership-heading">
+    <div class="section-heading">
+      <p class="section-kicker">{aboutPage.leadershipKicker}</p>
+      <h2 id="about-leadership-heading">{aboutPage.leadershipHeading}</h2>
+    </div>
+    <ol class="about-belief-list">
+      {
+        aboutLeadershipBeliefs.map((belief) => (
+          <li class="about-belief-card">
+            <h3>{belief.title}</h3>
+            <p>{belief.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="about-section about-outside-work" aria-labelledby="about-outside-work-heading">
+    <div class="section-heading">
+      <p class="section-kicker">{aboutPage.outsideWorkKicker}</p>
+      <h2 id="about-outside-work-heading">{aboutPage.outsideWorkHeading}</h2>
+    </div>
+    <div class="about-copy">
+      {aboutOutsideWorkParagraphs.map((paragraph) => <p>{paragraph}</p>)}
+    </div>
+  </section>
+
+  <section class="about-close" aria-labelledby="about-close-heading">
+    <div>
+      <p class="section-kicker">{aboutPage.closeKicker}</p>
+      <h2 id="about-close-heading">{aboutPage.closeHeading}</h2>
+    </div>
+    <div class="hero-actions about-close__actions" aria-label="Resume and contact links">
+      {
+        aboutClosingCtas.map((cta) => (
+          <a
+            class:list={[
+              "button-link",
+              cta.variant === "primary" && "button-link--primary"
+            ]}
+            href={cta.href}
+            download={cta.href === resumePdfRoute ? true : undefined}
+            data-analytics-event={getAboutCtaAnalytics(cta)?.event}
+            data-analytics-location="about_close"
+            data-analytics-target={getAboutCtaAnalytics(cta)?.target}
+          >
+            {cta.label}
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>

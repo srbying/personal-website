@@ -5,6 +5,7 @@ const root = process.cwd();
 
 const pages = [
   "src/pages/index.astro",
+  "src/pages/about.astro",
   "src/pages/experience.astro",
   "src/pages/projects.astro",
   "src/pages/projects/[slug].astro",
@@ -158,10 +159,12 @@ assert(
     navigation.includes("aria-current") &&
     navigation.includes("navigation-link--active") &&
     navigation.includes("mobile-navigation-link--active") &&
+    navigation.includes("navigation-link--primary-action") &&
+    navigation.includes("mobile-navigation-link--primary-action") &&
     !navigation.includes("isHighlighted") &&
     !navigation.includes("navigation-link--highlight") &&
     !navigation.includes("mobile-navigation-link--highlight"),
-  "Expected navigation active state to be driven by the current route, not a hard-coded highlighted item"
+  "Expected navigation active state to be route-driven, with primary action styling kept separate"
 );
 assert(
   /\.mobile-navigation\[hidden\]\s*{\s*display:\s*none;\s*}/.test(styles),
