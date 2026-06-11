@@ -7,6 +7,7 @@ const root = process.cwd();
 
 const aboutDataPath = "src/data/about.ts";
 const aboutPagePath = "src/pages/about.astro";
+const globalStylesPath = "src/styles/global.css";
 const aboutHtmlPath = "dist/about/index.html";
 const resumePdfRoute = siteConfig.resumePdfRoute;
 
@@ -100,6 +101,10 @@ function assertInOrder(source, snippets, message) {
   );
 }
 
+function countOccurrences(source, snippet) {
+  return source.split(snippet).length - 1;
+}
+
 function assertNoForbiddenSource(source, filePath) {
   const lowerSource = source.toLowerCase();
 
@@ -119,12 +124,48 @@ function normalizeRenderedText(source) {
     .replaceAll("&amp;", "&");
 }
 
+function findBeliefCards(source) {
+  return source.match(/<li class="[^"]*\babout-belief-card\b[^"]*">[\s\S]*?<\/li>/g) ?? [];
+}
+
+function assertTextLedBeliefCards(cards) {
+  assert(
+    cards.length === leadershipBeliefs.length,
+    "Expected About HTML to render exactly four leadership belief cards"
+  );
+
+  for (const card of cards) {
+    assert((card.match(/<h3\b/g) ?? []).length === 1, "Expected each belief card to include one h3");
+    assert((card.match(/<p\b/g) ?? []).length === 1, "Expected each belief card to include one body paragraph");
+    assert(
+      !/<(?:img|picture|svg)\b/i.test(card),
+      "Leadership belief cards must stay text-led without icons or visual assets"
+    );
+    assert(
+      !/\b(?:badge|icon)\b/i.test(card),
+      "Leadership belief cards must not use badge or icon treatment"
+    );
+  }
+}
+
+function assertRestrainedBeliefCardStyles(styles) {
+  const cardRule = styles.match(/\.about-belief-card\s*\{[\s\S]*?\}/)?.[0] ?? "";
+
+  assert(cardRule, "Expected About leadership card styles");
+  assert(
+    !/(?:box-shadow|background-image|linear-gradient|radial-gradient|filter:)/i.test(cardRule),
+    "About leadership cards must avoid loud decorative styling"
+  );
+}
+
 assert(existsSync(path.join(root, aboutDataPath)), `Missing ${aboutDataPath}`);
 assert(existsSync(path.join(root, aboutPagePath)), `Missing ${aboutPagePath}`);
+assert(existsSync(path.join(root, globalStylesPath)), `Missing ${globalStylesPath}`);
 
-const [aboutData, aboutPage, packageJsonSource] = await Promise.all([
+const [aboutData, aboutPage, globalStyles, packageJsonSource] = await Promise.all([
   readProjectFile(aboutDataPath),
   readProjectFile(aboutPagePath),
+  readProjectFile(globalStylesPath),
   readProjectFile("package.json")
 ]);
 
@@ -154,11 +195,13 @@ for (const { title, body } of leadershipBeliefs) {
 
 assertNoForbiddenSource(aboutData, aboutDataPath);
 assertNoForbiddenSource(aboutPage, aboutPagePath);
+assertRestrainedBeliefCardStyles(globalStyles);
 
 assert(existsSync(path.join(root, aboutHtmlPath)), `Missing built About page: ${aboutHtmlPath}`);
 const aboutHtml = await readProjectFile(aboutHtmlPath);
 const aboutMainHtml = aboutHtml.match(/<main\b[\s\S]*<\/main>/)?.[0] ?? aboutHtml;
 const aboutMainText = normalizeRenderedText(aboutMainHtml);
+const renderedBeliefCards = findBeliefCards(aboutMainHtml);
 
 assert(aboutMainHtml.includes("<h1"), "Expected About HTML to include one page h1");
 assert(
@@ -173,6 +216,7 @@ assert(aboutMainText.includes("How I Lead"), "Expected How I Lead section headin
 assert(aboutMainText.includes("Outside the Work"), "Expected Outside the Work section heading");
 assert(aboutMainText.includes("more than a decade"), "Expected supplied decade phrasing");
 assert(aboutMainText.includes("I'm") && aboutMainText.includes("I've"), "Expected contractions to remain");
+assertTextLedBeliefCards(renderedBeliefCards);
 
 for (const paragraph of [...openingCopy, ...outsideWorkCopy]) {
   assert(aboutMainText.includes(paragraph), `Built About page missing exact copy: ${paragraph}`);
@@ -181,6 +225,14 @@ for (const paragraph of [...openingCopy, ...outsideWorkCopy]) {
 for (const { title, body } of leadershipBeliefs) {
   assert(aboutMainText.includes(title), `Built About page missing leadership title: ${title}`);
   assert(aboutMainText.includes(body), `Built About page missing leadership body: ${body}`);
+  assert(
+    countOccurrences(aboutMainText, title) === 1,
+    `Built About page must render leadership title exactly once: ${title}`
+  );
+  assert(
+    countOccurrences(aboutMainText, body) === 1,
+    `Built About page must render leadership body exactly once: ${body}`
+  );
 }
 
 assertInOrder(
@@ -200,4 +252,4 @@ assert(
 
 assertNoForbiddenSource(aboutMainHtml, aboutHtmlPath);
 
-console.log("Issue #25 About route checks passed.");
+console.log("Issue #25/#26 About route and leadership checks passed.");
