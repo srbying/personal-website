@@ -17,6 +17,13 @@ const htmlPages = [
     expectsStructuredData: true
   },
   {
+    filePath: "dist/about/index.html",
+    path: "/about/",
+    title: "About | Steven Byington",
+    description:
+      "About Steven Byington's engineering leadership, full-stack experience, Marine Corps foundation, and personal operating style."
+  },
+  {
     filePath: "dist/experience/index.html",
     path: "/experience/",
     title: "Experience | Steven Byington",
@@ -62,6 +69,7 @@ const htmlPages = [
 
 const expectedSitemapPaths = [
   "/",
+  "/about/",
   "/experience/",
   "/projects/",
   "/projects/aeris/",

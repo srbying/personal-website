@@ -60,6 +60,7 @@ function getNavigationAnalytics(item: { href: string }) {
           <a
             class:list={[
               "navigation-link",
+              item.variant === "primary" && "navigation-link--primary-action",
               { "navigation-link--active": isActiveNavigationItem(item.href) }
             ]}
             href={item.href}
@@ -104,6 +105,7 @@ function getNavigationAnalytics(item: { href: string }) {
           <a
             class:list={[
               "mobile-navigation-link",
+              item.variant === "primary" && "mobile-navigation-link--primary-action",
               { "mobile-navigation-link--active": isActiveNavigationItem(item.href) }
             ]}
             href={item.href}
