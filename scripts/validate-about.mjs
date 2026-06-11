@@ -46,7 +46,7 @@ const outsideWorkCopy = [
   "The Marines taught me that leadership is earned through service. You take care of your people, and they take care of the mission.",
   "Running taught me patience. You don't run a marathon on race day. You build toward it week by week, track your progress honestly, and trust the work.",
   "I try to bring that same discipline to team-building. Small improvements add up. So does trust.",
-  "Outside of work, I play guitar, am learning mandolin, read when I can, and watch a lot of movies. Magnolia is my favorite. I live in Northeast Ohio with my family, and we spend a lot of time on hikes, at amusement parks, and finding small adventures close to home."
+  "Outside of work, I play guitar, wanting to learn mandolin, read when I can, and watch a lot of movies. Magnolia is my favorite. I live in Northeast Ohio with my family, and we spend a lot of time on hikes, at amusement parks, and finding small adventures close to home."
 ];
 
 const requiredDataSnippets = [
@@ -79,6 +79,10 @@ const forbiddenPageSnippets = [
   "military visual",
   "personal photo",
   "portrait"
+];
+
+const requiredOutsideWorkPrivacySnippets = [
+  "Northeast Ohio with my family"
 ];
 
 async function readProjectFile(filePath) {
@@ -188,6 +192,10 @@ for (const paragraph of [...openingCopy, ...outsideWorkCopy]) {
   assert(aboutData.includes(paragraph), `Missing exact About copy: ${paragraph}`);
 }
 
+for (const snippet of requiredOutsideWorkPrivacySnippets) {
+  assert(aboutData.includes(snippet), `Missing About privacy-safe wording: ${snippet}`);
+}
+
 for (const { title, body } of leadershipBeliefs) {
   assert(aboutData.includes(title), `Missing About leadership title: ${title}`);
   assert(aboutData.includes(body), `Missing About leadership body: ${body}`);
@@ -222,6 +230,10 @@ for (const paragraph of [...openingCopy, ...outsideWorkCopy]) {
   assert(aboutMainText.includes(paragraph), `Built About page missing exact copy: ${paragraph}`);
 }
 
+for (const snippet of requiredOutsideWorkPrivacySnippets) {
+  assert(aboutMainText.includes(snippet), `Built About page missing privacy-safe wording: ${snippet}`);
+}
+
 for (const { title, body } of leadershipBeliefs) {
   assert(aboutMainText.includes(title), `Built About page missing leadership title: ${title}`);
   assert(aboutMainText.includes(body), `Built About page missing leadership body: ${body}`);
@@ -252,4 +264,4 @@ assert(
 
 assertNoForbiddenSource(aboutMainHtml, aboutHtmlPath);
 
-console.log("Issue #25/#26 About route and leadership checks passed.");
+console.log("Issue #25/#26/#27 About route, leadership, and Outside the Work checks passed.");
