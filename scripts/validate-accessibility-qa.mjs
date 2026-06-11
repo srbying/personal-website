@@ -14,6 +14,9 @@ const pages = [
   "src/pages/404.astro"
 ];
 
+const navOrder = ["Home", "About", "Experience", "Projects", "Resume", "Contact"];
+const navHrefs = ["/", "/about/", "/experience/", "/projects/", "/resume/", "/contact/"];
+
 const colorPairs = [
   {
     label: "resume orange on page background",
@@ -63,6 +66,36 @@ function getCssVariable(styles, name) {
   assert(match, `Missing CSS variable: ${name}`);
 
   return match[1].toLowerCase();
+}
+
+function countOccurrences(source, snippet) {
+  return source.split(snippet).length - 1;
+}
+
+function assertInOrder(source, snippets, message) {
+  const indexes = snippets.map((snippet) => source.indexOf(snippet));
+
+  assert(indexes.every((index) => index !== -1), message);
+  assert(
+    indexes.every((index, position) => position === 0 || index > indexes[position - 1]),
+    message
+  );
+}
+
+function getLaunchNavigationBlock(siteData) {
+  const block = siteData.match(/export const launchNavigation = \[[\s\S]*?\] satisfies/)?.[0];
+
+  assert(block, "Expected launchNavigation block in shared site data");
+
+  return block;
+}
+
+function getLaunchNavigationItems(siteData) {
+  const block = getLaunchNavigationBlock(siteData);
+  const labels = Array.from(block.matchAll(/label: "([^"]+)"/g), (match) => match[1]);
+  const hrefs = Array.from(block.matchAll(/href: "([^"]+)"/g), (match) => match[1]);
+
+  return { block, labels, hrefs };
 }
 
 function getHeadingTags(source) {
@@ -123,11 +156,12 @@ function assertContrast() {
   }
 }
 
-const [packageJsonSource, layout, navigation, styles, launchAssets, ...pageSources] =
+const [packageJsonSource, layout, navigation, siteData, styles, launchAssets, ...pageSources] =
   await Promise.all([
     readProjectFile("package.json"),
     readProjectFile("src/layouts/BaseLayout.astro"),
     readProjectFile("src/components/LaunchNavigation.astro"),
+    readProjectFile("src/data/site.ts"),
     readProjectFile("src/styles/global.css"),
     readProjectFile("src/data/launchAssets.ts"),
     ...pages.map(readProjectFile)
@@ -146,25 +180,58 @@ assert(layout.includes('id="main-content"'), "Expected skip link target");
 assert(layout.includes('tabindex="-1"'), "Expected programmatic main focus target");
 assert(layout.includes("mainContent.focus"), "Expected skip link to focus main content");
 
+const launchNavigation = getLaunchNavigationItems(siteData);
+
+assert(
+  JSON.stringify(launchNavigation.labels) === JSON.stringify(navOrder),
+  "Expected exact launch navigation labels: Home, About, Experience, Projects, Resume, Contact"
+);
+assert(
+  JSON.stringify(launchNavigation.hrefs) === JSON.stringify(navHrefs),
+  "Expected exact launch navigation hrefs for the six top-level links"
+);
+assertInOrder(
+  launchNavigation.block,
+  navOrder.map((label) => `label: "${label}"`),
+  "Expected shared launchNavigation label order to stay stable"
+);
+assert(
+  launchNavigation.block.includes('label: "Resume", href: "/resume/", variant: "primary"'),
+  "Expected Resume to remain the only primary navigation action"
+);
 assert(
   navigation.includes('aria-hidden="true"') &&
+    navigation.includes('aria-expanded="false"') &&
+    navigation.includes('aria-controls="mobile-navigation"') &&
     navigation.includes("panel.inert") &&
     navigation.includes('panel.toggleAttribute("inert"') &&
+    navigation.includes('toggle.setAttribute("aria-label", isOpen ? "Close navigation" : "Open navigation")') &&
+    navigation.includes('panel.setAttribute("aria-hidden", String(!isOpen))') &&
+    navigation.includes('header.dataset.menuState = isOpen ? "open" : "closed"') &&
     navigation.includes("event.key === \"Escape\"") &&
+    navigation.includes('closeMenu({ shouldFocusToggle: true })') &&
     navigation.includes("toggle.focus"),
   "Expected mobile menu aria-hidden, inert property/attribute, Escape close, and focus return behavior"
 );
 assert(
   navigation.includes("Astro.url.pathname") &&
+    navigation.includes("isActiveNavigationItem") &&
     navigation.includes("aria-current") &&
     navigation.includes("navigation-link--active") &&
     navigation.includes("mobile-navigation-link--active") &&
     navigation.includes("navigation-link--primary-action") &&
     navigation.includes("mobile-navigation-link--primary-action") &&
+    countOccurrences(navigation, "launchNavigation.map") === 2 &&
     !navigation.includes("isHighlighted") &&
     !navigation.includes("navigation-link--highlight") &&
     !navigation.includes("mobile-navigation-link--highlight"),
-  "Expected navigation active state to be route-driven, with primary action styling kept separate"
+  "Expected desktop and mobile navigation to map shared data with route-driven active state"
+);
+assert(
+  navigation.includes('<nav class="desktop-navigation" aria-label="Launch navigation">') &&
+    navigation.includes('class="mobile-navigation"') &&
+    navigation.includes('aria-label="Mobile launch navigation"'),
+  "Expected distinct accessible desktop and mobile navigation landmarks"
 );
 assert(
   /\.mobile-navigation\[hidden\]\s*{\s*display:\s*none;\s*}/.test(styles),
@@ -182,6 +249,10 @@ assert(
     styles.includes("var(--color-cream)") &&
     styles.includes("var(--color-accent-strong)"),
   "Expected strong two-tone global focus-visible ring"
+);
+assert(
+  !/\.(?:navigation-link|mobile-navigation-link|button-link)[^{]*\{[^}]*outline:\s*none/i.test(styles),
+  "Navigation links and About CTAs must not remove focus outlines"
 );
 assert(
   styles.includes("@media (prefers-reduced-motion: reduce)") &&
