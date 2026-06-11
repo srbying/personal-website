@@ -8,6 +8,7 @@ const requiredFiles = [
   "astro.config.mjs",
   "tsconfig.json",
   "src/components/LaunchNavigation.astro",
+  "src/data/about.ts",
   "src/components/SiteFooter.astro",
   "src/data/content.ts",
   "src/data/experience.json",
@@ -15,11 +16,12 @@ const requiredFiles = [
   "src/data/site.ts",
   "src/layouts/BaseLayout.astro",
   "src/pages/404.astro",
+  "src/pages/about.astro",
   "src/pages/index.astro",
   "src/styles/global.css"
 ];
 
-const navOrder = ["Home", "Experience", "Projects", "Resume", "Contact"];
+const navOrder = ["Home", "About", "Experience", "Projects", "Resume", "Contact"];
 const footerLabels = ["Email", "LinkedIn", "GitHub", "Resume PDF"];
 const notFoundLinks = ["Home", "Resume", "Contact"];
 
@@ -86,11 +88,15 @@ const navIndexes = navOrder.map((label) => siteData.indexOf(`label: "${label}"`)
 assert(navIndexes.every((index) => index !== -1), "Expected every launch navigation item");
 assert(
   navIndexes.every((index, position) => position === 0 || index > navIndexes[position - 1]),
-  "Expected launch navigation order: Home, Experience, Projects, Resume, Contact"
+  "Expected launch navigation order: Home, About, Experience, Projects, Resume, Contact"
+);
+assert(
+  siteData.includes('label: "Resume", href: "/resume/", variant: "primary"'),
+  "Expected Resume to remain the primary navigation action"
 );
 assert(
   !siteData.includes("isHighlighted: true"),
-  "Expected navigation highlight to be route-driven, not hard-coded to Resume"
+  "Expected navigation highlight to be route-driven and primary-action-driven, not hard-coded with isHighlighted"
 );
 for (const label of footerLabels) {
   assert(siteData.includes(`label: "${label}"`), `Expected footer link label: ${label}`);
@@ -115,6 +121,11 @@ const navigation = await readProjectFile("src/components/LaunchNavigation.astro"
 assert(
   navigation.includes("aria-current") && navigation.includes("navigation-link--active"),
   "Expected navigation active state to use aria-current and active classes"
+);
+assert(
+  navigation.includes("navigation-link--primary-action") &&
+    navigation.includes("mobile-navigation-link--primary-action"),
+  "Expected navigation to support a primary Resume action on desktop and mobile"
 );
 assert(navigation.includes("aria-expanded=\"false\""), "Expected accessible mobile menu disclosure state");
 assert(navigation.includes("aria-controls=\"mobile-navigation\""), "Expected mobile menu controls relationship");
