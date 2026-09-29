@@ -58,16 +58,8 @@ const sectionOrder = [
   "Contact"
 ];
 
-const rejectedPrivateStrings = [
-  "steven@stevenbyington.me",
-  "(971)",
-  "971",
-  "331-5101",
-  "Beaverton, OR",
-  "Portland",
-  "Oregon",
-  "Remote"
-];
+const usStateAbbreviationPattern =
+  "A[LKZR]|C[AOT]|D[EC]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEHINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AIT]|W[AIVY]";
 
 const rejectedLaunchFeatures = [
   "Resume content will build",
@@ -88,6 +80,41 @@ function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
   }
+}
+
+function normalizePrivacySource(source) {
+  return source
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function assertNoPrivateResumeDetails(source) {
+  const normalizedSource = normalizePrivacySource(source);
+
+  assert(
+    !/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(normalizedSource),
+    "Rendered HTML resume source must not expose email-like text"
+  );
+  assert(!/\btel:/i.test(source), "Rendered HTML resume source must not expose telephone links");
+  assert(
+    !/(?:\+?1[-.\s]?)?(?:\(\d{3}\)|\d{3})[-.\s]\d{3}[-.\s]\d{4}/.test(
+      normalizedSource
+    ),
+    "Rendered HTML resume source must not expose phone-number-like text"
+  );
+  assert(
+    !/\b\d{1,6}\s+[A-Za-z0-9.'-]+(?:\s+[A-Za-z0-9.'-]+){0,4}\s+(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|boulevard|blvd|court|ct|circle|cir|way)\b/i.test(
+      normalizedSource
+    ),
+    "Rendered HTML resume source must not expose street-address-like text"
+  );
+  assert(
+    !new RegExp(
+      `\\b[A-Z][A-Za-z.'-]+(?:\\s+[A-Z][A-Za-z.'-]+){0,2},\\s+(?:${usStateAbbreviationPattern})\\b`
+    ).test(normalizedSource),
+    "Rendered HTML resume source must not expose city-and-state-style text"
+  );
 }
 
 for (const filePath of requiredFiles) {
@@ -152,12 +179,7 @@ assert(
 );
 
 const publicHtmlSources = `${resumeContentSources}\n${resumePage}`;
-for (const privateString of rejectedPrivateStrings) {
-  assert(
-    !publicHtmlSources.includes(privateString),
-    `Rendered HTML resume source must not expose private detail: ${privateString}`
-  );
-}
+assertNoPrivateResumeDetails(publicHtmlSources);
 
 const lowerCasePage = resumePage.toLowerCase();
 for (const rejected of rejectedLaunchFeatures) {

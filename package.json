@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "test:acceptance": "node scripts/validate-shell.mjs",
+    "test:about": "node scripts/validate-about.mjs",
     "test:assets": "node scripts/validate-assets.mjs",
     "test:home": "node scripts/validate-home.mjs",
     "test:resume": "node scripts/validate-resume.mjs",
