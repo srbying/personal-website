@@ -122,13 +122,14 @@ function assertContrast() {
   }
 }
 
-const [packageJsonSource, layout, navigation, styles, launchAssets, ...pageSources] =
+const [packageJsonSource, layout, navigation, styles, launchAssets, portfolioChat, ...pageSources] =
   await Promise.all([
     readProjectFile("package.json"),
     readProjectFile("src/layouts/BaseLayout.astro"),
     readProjectFile("src/components/LaunchNavigation.astro"),
     readProjectFile("src/styles/global.css"),
     readProjectFile("src/data/launchAssets.ts"),
+    readProjectFile("src/components/PortfolioChat.astro"),
     ...pages.map(readProjectFile)
   ]);
 
@@ -196,8 +197,11 @@ assert(!launchAssets.includes('reviewStatus: "pending"'), "Expected all launch a
 
 for (const [index, filePath] of pages.entries()) {
   const source = pageSources[index];
+  const composedSource = filePath === "src/pages/index.astro"
+    ? `${portfolioChat}\n${source}`
+    : source;
 
-  assertHeadingOrder(filePath, source);
+  assertHeadingOrder(filePath, composedSource);
 }
 
 for (const source of pageSources) {
