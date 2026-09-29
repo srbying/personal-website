@@ -1,6 +1,6 @@
 # Steven Byington Portfolio
 
-A personal portfolio website, focused on presenting my resume, experience, selected projects, and contact information clearly.
+A personal portfolio website focused on presenting my resume, experience, selected projects, and contact information clearly.
 
 ## Development
 
@@ -11,7 +11,16 @@ A personal portfolio website, focused on presenting my resume, experience, selec
 - `npm run deploy:worker` publishes the backend to Cloudflare after Wrangler authentication.
 - `npm run test:acceptance` checks the launch shell acceptance criteria.
 - `npm run test:assets` checks the launch asset manifest and public asset paths.
+- `npm run test:knowledge` checks the local approved-note sync workflow and its adapters.
+- `npm run test:worker` checks Worker request handling.
+- `npm run test:portfolio-chat` checks browser chat message limits.
 
-The Cloudflare backend lives in `workers/steven-assistant/`. Its chat endpoint validates a bounded conversation, retrieves only the approved professional-role sentence, and returns a fixed third-person answer or a missing-information response. The homepage chat wording is a candidate and needs Steven's approval before production; this implementation does not deploy the Worker. The Worker source and configuration are separate from the Astro site build.
+## Portfolio chat
 
-Before running `npm run dev:worker`, `npm run knowledge:demo`, or `npm run test:knowledge`, copy `workers/steven-assistant/.dev.vars.example` to `workers/steven-assistant/.dev.vars` and replace its placeholders with local settings. `.dev.vars` is gitignored. Set the same binding names in the Cloudflare Worker runtime environment before deployment; do not put their values in `wrangler.jsonc` or tracked files. The Worker fails closed with a service-unavailable response when required configuration is missing or invalid.
+The Cloudflare backend lives in `workers/steven-assistant/`. Its chat endpoint validates bounded conversations, retrieves approved evidence, and keeps the fixed role-only response policy. Conversation history is not part of the knowledge sync workflow. The public homepage wording and approved evidence remain subject to Steven's approval before production.
+
+## Local knowledge maintenance
+
+Knowledge source files and sync state belong outside this repository, by default in `~/Documents/personal-website-knowledge/`. Copy `workers/steven-assistant/.dev.vars.example` to the ignored `workers/steven-assistant/.dev.vars` and fill in local runtime values. The example contains variable names and placeholders only. Set the Worker runtime variables through Cloudflare settings for production; do not put their values in tracked files or `wrangler.jsonc`.
+
+Use `npm run knowledge:sync -- validate` to check approved notes locally and `npm run knowledge:sync -- preview` to see additions, edits, and removals without contacting Cloudflare. `sync` and `rebuild` show the same plan and proceed only after the exact text `APPLY` is entered. `verify` checks known IDs in Vectorize; `query "..."` is read-only. The approved collection and `.sync/manifest.json` stay outside the repository and Astro build.

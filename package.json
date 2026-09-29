@@ -7,9 +7,9 @@
     "dev": "astro dev",
     "dev:worker": "wrangler dev --config workers/steven-assistant/wrangler.jsonc --ip 127.0.0.1",
     "deploy:worker": "wrangler deploy --config workers/steven-assistant/wrangler.jsonc",
-    "knowledge:demo": "node --env-file=workers/steven-assistant/.dev.vars workers/steven-assistant/knowledge-demo.mjs",
-    "test:knowledge": "node --env-file=workers/steven-assistant/.dev.vars --test workers/steven-assistant/knowledge-demo.test.mjs",
+    "test:knowledge": "node --test workers/steven-assistant/knowledge/*.test.js",
     "test:worker": "node --test workers/steven-assistant/src/worker.test.js",
+    "test:portfolio-chat": "node --test src/scripts/portfolioChatMessages.test.js",
     "build": "astro build",
     "preview": "astro preview",
     "test:acceptance": "node scripts/validate-shell.mjs",
@@ -21,7 +21,8 @@
     "test:projects": "node scripts/validate-projects.mjs",
     "test:seo": "node scripts/validate-seo.mjs",
     "test:analytics": "node scripts/validate-analytics.mjs",
-    "test:accessibility": "node scripts/validate-accessibility-qa.mjs"
+    "test:accessibility": "node scripts/validate-accessibility-qa.mjs",
+    "knowledge:sync": "node --env-file=workers/steven-assistant/.dev.vars workers/steven-assistant/knowledge-sync.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

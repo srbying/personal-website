@@ -7,4 +7,5 @@ MAX_MESSAGE_LENGTH="replace-with-per-message-character-limit"
 MAX_TOTAL_MESSAGE_LENGTH="replace-with-total-character-limit"
 MAX_BODY_BYTES="replace-with-request-byte-limit"
 RELEVANCE_THRESHOLD="replace-with-vector-score-threshold"
-ALLOWED_ORIGINS_JSON='["https://your-site.example","http://localhost:4321","http://127.0.0.1:4321"]'
+ALLOWED_ORIGINS_JSON='["replace-with-approved-origin"]'
+KNOWLEDGE_DIR="replace-with-absolute-path-outside-repository"

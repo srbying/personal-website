@@ -60,6 +60,22 @@ async function sendMessages(messages, env) {
   );
 }
 
+test("the limits endpoint returns the effective request validation limits", async () => {
+  const { env } = createEnvironment();
+  const response = await worker.fetch(new Request("https://worker.test/api/chat/limits", {
+    headers: { origin: TEST_ORIGIN }
+  }), env);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    maxMessages: 4,
+    maxMessageLength: 80,
+    maxTotalMessageLength: 200
+  });
+  assert.equal(response.headers.get("access-control-allow-origin"), TEST_ORIGIN);
+  assert.equal(response.headers.get("access-control-allow-methods"), "GET, POST, OPTIONS");
+});
+
 test("role questions and follow-ups return only the approved role answer", async () => {
   const { env, calls } = createEnvironment();
   const roleResponse = await sendMessages([
