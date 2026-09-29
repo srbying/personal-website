@@ -1,0 +1,10 @@
+# Copy to .dev.vars and replace every placeholder. Never commit .dev.vars.
+EMBEDDING_MODEL="replace-with-approved-workers-ai-model"
+EMBEDDING_DIMENSIONS="replace-with-vector-dimensions"
+VECTOR_TOP_K="replace-with-vector-result-count"
+MAX_MESSAGES="replace-with-message-count-limit"
+MAX_MESSAGE_LENGTH="replace-with-per-message-character-limit"
+MAX_TOTAL_MESSAGE_LENGTH="replace-with-total-character-limit"
+MAX_BODY_BYTES="replace-with-request-byte-limit"
+RELEVANCE_THRESHOLD="replace-with-vector-score-threshold"
+ALLOWED_ORIGINS_JSON='["https://your-site.example","http://localhost:4321","http://127.0.0.1:4321"]'

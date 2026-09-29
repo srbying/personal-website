@@ -1,16 +1,16 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { heroLandscape, resumePdf } from "../data/launchAssets";
+import PortfolioChat from "../components/PortfolioChat.astro";
+import { resumePdf } from "../data/launchAssets";
 import {
   closingCtas,
-  homeHero,
   leadershipPrinciples,
   recentExperience,
   type HomeCta
 } from "../data/home";
 import { structuredIdentityMetadata } from "../data/site";
 
-function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
+function getHomeCtaAnalytics(cta: HomeCta, location: "home_close") {
   if (cta.href === resumePdf.path) {
     return { event: "resume_download", location, target: "resume_pdf" };
   }
@@ -33,44 +33,7 @@ function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
   canonicalPath="/"
   structuredData={structuredIdentityMetadata}
 >
-  <section class="hero-section">
-    <picture class="hero-section__media">
-      <source srcset={heroLandscape.path} type="image/webp" />
-      <img
-        src={heroLandscape.fallbackPath}
-        alt={heroLandscape.alt}
-        width={heroLandscape.width}
-        height={heroLandscape.height}
-        loading="eager"
-        decoding="async"
-      />
-    </picture>
-    <div class="hero-section__content">
-      <p class="hero-kicker">{homeHero.eyebrow}</p>
-      <h1>{homeHero.headline}</h1>
-      <p>{homeHero.supportingLine}</p>
-      <p class="hero-proof">{homeHero.metadata}</p>
-      <div class="hero-actions" aria-label="Primary links">
-        {
-          homeHero.ctas.map((cta) => (
-            <a
-              class:list={[
-                "button-link",
-                cta.variant === "primary" && "button-link--primary"
-              ]}
-              href={cta.href}
-              download={cta.href === resumePdf.path ? true : undefined}
-              data-analytics-event={getHomeCtaAnalytics(cta, "hero")?.event}
-              data-analytics-location={getHomeCtaAnalytics(cta, "hero")?.location}
-              data-analytics-target={getHomeCtaAnalytics(cta, "hero")?.target}
-            >
-              {cta.label}
-            </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+  <PortfolioChat />
 
   <section class="home-section recent-experience" aria-labelledby="recent-experience-heading">
     <div class="section-heading">

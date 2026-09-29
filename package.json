@@ -5,6 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "dev:worker": "wrangler dev --config workers/steven-assistant/wrangler.jsonc --ip 127.0.0.1",
+    "deploy:worker": "wrangler deploy --config workers/steven-assistant/wrangler.jsonc",
+    "knowledge:demo": "node --env-file=workers/steven-assistant/.dev.vars workers/steven-assistant/knowledge-demo.mjs",
+    "test:knowledge": "node --env-file=workers/steven-assistant/.dev.vars --test workers/steven-assistant/knowledge-demo.test.mjs",
+    "test:worker": "node --test workers/steven-assistant/src/worker.test.js",
     "build": "astro build",
     "preview": "astro preview",
     "test:acceptance": "node scripts/validate-shell.mjs",
@@ -27,6 +32,7 @@
     "astro": "^6.3.1"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "wrangler": "4.143.0"
   }
 }
