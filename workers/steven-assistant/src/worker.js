@@ -39,6 +39,13 @@ export default {
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
       return jsonResponse({ ok: true, service: "steven-assistant" }, 200, options);
     }
+    if (request.method === "GET" && url.pathname === "/api/chat/limits") {
+      return jsonResponse({
+        maxMessages: config.maxMessages,
+        maxMessageLength: config.maxMessageLength,
+        maxTotalMessageLength: config.maxTotalMessageLength
+      }, 200, options);
+    }
     if (url.pathname !== "/api/chat") {
       return jsonResponse({ error: "not_found" }, 404, options);
     }

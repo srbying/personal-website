@@ -94,6 +94,8 @@ function getCtaAnalytics(href: string) {
 </section>
 
 <script>
+  import { parseChatLimits, selectRecentMessages } from "../scripts/portfolioChatMessages.js";
+
   type ChatMessage = { role: "user" | "assistant"; content: string };
   type ChatResponse = { status?: "answered" | "insufficient"; answer?: string };
 
@@ -110,6 +112,15 @@ function getCtaAnalytics(href: string) {
     const starterButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-starter-question]"));
 
     if (!transcript || !form || !input || !sendButton || !status || !apiUrl) return;
+
+    const limitsUrl = new URL(apiUrl);
+    limitsUrl.pathname = `${limitsUrl.pathname.replace(/\/$/, "")}/limits`;
+    const getChatLimits = async () => {
+      const response = await fetch(limitsUrl);
+      if (!response.ok) throw new Error("Chat limits are unavailable.");
+      return parseChatLimits(await response.json());
+    };
+
     root.dataset.ready = "true";
 
     const conversation: ChatMessage[] = [];
@@ -157,15 +168,36 @@ function getCtaAnalytics(href: string) {
       const cleanQuestion = question.trim();
       if (pending || !cleanQuestion || cleanQuestion.length > 1000) return;
 
-      conversation.push({ role: "user", content: cleanQuestion });
-      addMessage("user", cleanQuestion);
-      input.value = "";
       setPending(true);
       status.textContent = "Checking the information available about Steven…";
-
+      let questionWasAdded = false;
       try {
-        const recentMessages = conversation.slice(-8);
-        if (recentMessages[0]?.role !== "user") recentMessages.shift();
+        const limits = await getChatLimits();
+        input.maxLength = Math.min(
+          1000,
+          limits.maxMessageLength,
+          limits.maxTotalMessageLength
+        );
+        if (
+          cleanQuestion.length > limits.maxMessageLength ||
+          cleanQuestion.length > limits.maxTotalMessageLength
+        ) {
+          status.textContent = "Please shorten your question to fit the chat's limits.";
+          return;
+        }
+
+        const newMessage: ChatMessage = { role: "user", content: cleanQuestion };
+        const recentMessages = selectRecentMessages([...conversation, newMessage], limits);
+        if (!recentMessages) {
+          status.textContent = "This conversation is too long. Start with a shorter question.";
+          return;
+        }
+
+        conversation.push(newMessage);
+        questionWasAdded = true;
+        addMessage("user", cleanQuestion);
+        input.value = "";
+
         const controller = new AbortController();
         const timeoutId = window.setTimeout(() => controller.abort(), 20000);
         let response: Response;
@@ -195,7 +227,7 @@ function getCtaAnalytics(href: string) {
         if (conversation.length > 8) conversation.splice(0, conversation.length - 8);
         status.textContent = "Answer added to the conversation.";
       } catch {
-        conversation.pop();
+        if (questionWasAdded) conversation.pop();
         addFallback();
         status.textContent = "The chat could not answer. Try again or use one of the links in its response.";
       } finally {

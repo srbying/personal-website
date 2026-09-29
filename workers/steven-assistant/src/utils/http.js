@@ -9,7 +9,7 @@ export function jsonResponse(body, status, { origin, allowedOrigins = EMPTY_ORIG
   });
   if (origin && allowedOrigins.has(origin)) {
     headers.set("access-control-allow-origin", origin);
-    headers.set("access-control-allow-methods", "POST, OPTIONS");
+    headers.set("access-control-allow-methods", "GET, POST, OPTIONS");
     headers.set("access-control-allow-headers", "Content-Type");
     headers.set("access-control-max-age", "86400");
   }
