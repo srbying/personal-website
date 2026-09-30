@@ -1,6 +1,7 @@
 ---
 import { homeHero } from "../data/home";
-import { resumePdf } from "../data/launchAssets";
+import { contactLinks, hasConfirmedHref, resumePdf } from "../data/launchAssets";
+import { preparedFaqs } from "../data/prepared-faqs.js";
 
 const apiUrl = import.meta.env.PUBLIC_STEVEN_ASSISTANT_URL ??
   (import.meta.env.DEV
@@ -22,6 +23,10 @@ function getCtaAnalytics(href: string) {
   }
   return undefined;
 }
+
+const fallbackContactLinks = Object.values(contactLinks)
+  .filter(hasConfirmedHref)
+  .filter((link) => link.href !== resumePdf.path);
 ---
 
 <section class="portfolio-chat" aria-labelledby="portfolio-chat-title" data-portfolio-chat data-api-url={apiUrl}>
@@ -90,14 +95,52 @@ function getCtaAnalytics(href: string) {
         ))}
       </div>
     </div>
+
+    <section class="portfolio-chat__prepared" aria-labelledby="portfolio-chat-prepared-title">
+      <h2 id="portfolio-chat-prepared-title">Prepared FAQs</h2>
+      {
+        preparedFaqs.map((faq) => (
+          <details class="portfolio-chat__faq" data-prepared-faq>
+            <summary>{faq.question}</summary>
+            <p>{faq.answer}</p>
+          </details>
+        ))
+      }
+    </section>
+
+    <section
+      class="portfolio-chat__fallback"
+      aria-labelledby="portfolio-chat-fallback-title"
+      data-chat-fallback
+      hidden
+    >
+      <h2 id="portfolio-chat-fallback-title">AI answers are temporarily unavailable</h2>
+      <p>Review a Prepared FAQ, download Steven's resume, or use one of the contact paths below.</p>
+      <a class="button-link button-link--primary" href={resumePdf.path} download>
+        Download Resume PDF
+      </a>
+      <nav class="portfolio-chat__contact-paths" aria-label="Contact paths">
+        {
+          fallbackContactLinks.map((link) => (
+            <a
+              href={link.href}
+              target={link.isExternal && !link.href.startsWith("mailto:") ? "_blank" : undefined}
+              rel={link.isExternal && !link.href.startsWith("mailto:") ? "noopener noreferrer" : undefined}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+      <button class="portfolio-chat__retry" type="button" data-chat-retry>
+        Retry failed question
+      </button>
+    </section>
   </div>
 </section>
 
 <script>
-  import { parseChatLimits, selectRecentMessages } from "../scripts/portfolioChatMessages.js";
-
-  type ChatMessage = { role: "user" | "assistant"; content: string };
-  type ChatResponse = { status?: "answered" | "insufficient"; answer?: string };
+  import { createPortfolioChat } from "../scripts/portfolio-chat.js";
 
   const setupPortfolioChat = () => {
     const root = document.querySelector<HTMLElement>("[data-portfolio-chat]");
@@ -108,25 +151,16 @@ function getCtaAnalytics(href: string) {
     const input = root.querySelector<HTMLTextAreaElement>("[data-question-input]");
     const sendButton = root.querySelector<HTMLButtonElement>("[data-send-button]");
     const status = root.querySelector<HTMLElement>("[data-chat-status]");
+    const fallback = root.querySelector<HTMLElement>("[data-chat-fallback]");
+    const retryButton = root.querySelector<HTMLButtonElement>("[data-chat-retry]");
+    const preparedFaqs = Array.from(root.querySelectorAll<HTMLDetailsElement>("[data-prepared-faq]"));
     const apiUrl = root.dataset.apiUrl;
     const starterButtons = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-starter-question]"));
 
-    if (!transcript || !form || !input || !sendButton || !status || !apiUrl) return;
-
-    const limitsUrl = new URL(apiUrl);
-    limitsUrl.pathname = `${limitsUrl.pathname.replace(/\/$/, "")}/limits`;
-    const getChatLimits = async () => {
-      const response = await fetch(limitsUrl);
-      if (!response.ok) throw new Error("Chat limits are unavailable.");
-      return parseChatLimits(await response.json());
-    };
-
+    if (!transcript || !form || !input || !sendButton || !status || !fallback || !retryButton || !apiUrl) return;
     root.dataset.ready = "true";
 
-    const conversation: ChatMessage[] = [];
-    let pending = false;
-
-    const addMessage = (role: ChatMessage["role"], content: string) => {
+    const addMessage = (role: "user" | "assistant", content: string) => {
       const message = document.createElement("p");
       message.className = `portfolio-chat__message portfolio-chat__message--${role}`;
       message.textContent = content;
@@ -134,106 +168,37 @@ function getCtaAnalytics(href: string) {
       transcript.scrollTop = transcript.scrollHeight;
     };
 
-    const addFallback = () => {
-      const message = document.createElement("p");
-      message.className = "portfolio-chat__message portfolio-chat__message--assistant";
-      message.append("The chat is temporarily unavailable. Try again, or browse Steven's ");
+    const chat = createPortfolioChat({
+      apiUrl,
+      onStateChange: (state) => {
+        if (state.appendQuestion && state.question) addMessage("user", state.question);
+        if (state.answer) addMessage("assistant", state.answer);
+        if (state.maxQuestionLength) input.maxLength = state.maxQuestionLength;
 
-      const resumeLink = document.createElement("a");
-      resumeLink.href = "/resume/";
-      resumeLink.textContent = "resume";
-      message.append(resumeLink, ", ");
+        const showingFallback = state.status === "unavailable" || state.retrying === true;
+        fallback.hidden = !showingFallback;
+        if (showingFallback) preparedFaqs.forEach((faq) => { faq.open = true; });
+        if (state.status === "ready") preparedFaqs.forEach((faq) => { faq.open = false; });
 
-      const experienceLink = document.createElement("a");
-      experienceLink.href = "/experience/";
-      experienceLink.textContent = "experience";
-      message.append(experienceLink, ", or ");
-
-      const contactLink = document.createElement("a");
-      contactLink.href = "/contact/";
-      contactLink.textContent = "contact Steven";
-      message.append(contactLink, ".");
-      transcript.append(message);
-      transcript.scrollTop = transcript.scrollHeight;
-    };
-
-    const setPending = (value: boolean) => {
-      pending = value;
-      input.disabled = value;
-      sendButton.disabled = value;
-      starterButtons.forEach((button) => { button.disabled = value; });
-    };
-
-    const ask = async (question: string) => {
-      const cleanQuestion = question.trim();
-      if (pending || !cleanQuestion || cleanQuestion.length > 1000) return;
-
-      setPending(true);
-      status.textContent = "Checking the information available about Steven…";
-      let questionWasAdded = false;
-      try {
-        const limits = await getChatLimits();
-        input.maxLength = Math.min(
-          1000,
-          limits.maxMessageLength,
-          limits.maxTotalMessageLength
-        );
-        if (
-          cleanQuestion.length > limits.maxMessageLength ||
-          cleanQuestion.length > limits.maxTotalMessageLength
-        ) {
-          status.textContent = "Please shorten your question to fit the chat's limits.";
-          return;
-        }
-
-        const newMessage: ChatMessage = { role: "user", content: cleanQuestion };
-        const recentMessages = selectRecentMessages([...conversation, newMessage], limits);
-        if (!recentMessages) {
-          status.textContent = "This conversation is too long. Start with a shorter question.";
-          return;
-        }
-
-        conversation.push(newMessage);
-        questionWasAdded = true;
-        addMessage("user", cleanQuestion);
-        input.value = "";
-
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), 20000);
-        let response: Response;
-        try {
-          response = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messages: recentMessages }),
-            signal: controller.signal
-          });
-        } finally {
-          window.clearTimeout(timeoutId);
-        }
-        if (!response.ok) throw new Error("Chat request failed.");
-
-        const result = await response.json() as ChatResponse;
-        if (
-          !["answered", "insufficient"].includes(result.status ?? "") ||
-          typeof result.answer !== "string" ||
-          !result.answer.trim() ||
-          result.answer.length > 2000
-        ) {
-          throw new Error("Chat response was invalid.");
-        }
-        addMessage("assistant", result.answer.trim());
-        conversation.push({ role: "assistant", content: result.answer.trim() });
-        if (conversation.length > 8) conversation.splice(0, conversation.length - 8);
-        status.textContent = "Answer added to the conversation.";
-      } catch {
-        if (questionWasAdded) conversation.pop();
-        addFallback();
-        status.textContent = "The chat could not answer. Try again or use one of the links in its response.";
-      } finally {
-        setPending(false);
-        input.focus();
+        const busy = state.status === "pending";
+        const unavailable = state.status === "unavailable";
+        input.disabled = busy || unavailable;
+        sendButton.disabled = busy || unavailable;
+        starterButtons.forEach((button) => { button.disabled = busy || unavailable; });
+        retryButton.hidden = !showingFallback || state.retryAvailable === false;
+        retryButton.disabled = busy;
+        status.textContent = state.message ?? "";
       }
+    });
+
+    const restoreFocus = () => {
+      if (chat.getState().status === "unavailable") retryButton.focus();
+      else input.focus();
+    };
+
+    const ask = (question: string) => {
+      input.value = "";
+      void chat.ask(question).then(restoreFocus);
     };
 
     form.addEventListener("submit", (event) => {
@@ -253,6 +218,10 @@ function getCtaAnalytics(href: string) {
         const question = button.dataset.starterQuestion;
         if (question) void ask(question);
       });
+    });
+
+    retryButton.addEventListener("click", () => {
+      void chat.retry().then(restoreFocus);
     });
   };
 
@@ -481,6 +450,88 @@ function getCtaAnalytics(href: string) {
   }
 
   .portfolio-chat__starter:disabled {
+    cursor: progress;
+    opacity: 0.68;
+  }
+
+  .portfolio-chat__prepared {
+    display: grid;
+    gap: 0.55rem;
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.85rem;
+  }
+
+  .portfolio-chat__prepared h2,
+  .portfolio-chat__fallback h2 {
+    margin: 0;
+    color: var(--color-accent-strong);
+    font-size: 1rem;
+  }
+
+  .portfolio-chat__faq {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-cream);
+    padding: 0.65rem 0.8rem;
+  }
+
+  .portfolio-chat__faq summary {
+    color: var(--color-accent-strong);
+    cursor: pointer;
+    font-weight: 750;
+  }
+
+  .portfolio-chat__faq p {
+    margin: 0.6rem 0 0;
+    line-height: 1.45;
+  }
+
+  .portfolio-chat__fallback {
+    display: grid;
+    justify-items: start;
+    gap: 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-background);
+    padding: 0.9rem;
+  }
+
+  .portfolio-chat__fallback[hidden],
+  .portfolio-chat__retry[hidden] {
+    display: none;
+  }
+
+  .portfolio-chat__fallback > p {
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.45;
+  }
+
+  .portfolio-chat__contact-paths {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.9rem;
+  }
+
+  .portfolio-chat__contact-paths a {
+    color: var(--color-accent-strong);
+    font-weight: 700;
+    text-underline-offset: 0.15em;
+  }
+
+  .portfolio-chat__retry {
+    min-height: 2.65rem;
+    border: 1px solid var(--color-accent-strong);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-accent-strong);
+    cursor: pointer;
+    font: inherit;
+    font-weight: 750;
+    padding: 0.55rem 0.8rem;
+  }
+
+  .portfolio-chat__retry:disabled {
     cursor: progress;
     opacity: 0.68;
   }

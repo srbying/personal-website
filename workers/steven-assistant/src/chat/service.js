@@ -7,6 +7,9 @@ function result(status, body) {
 
 export async function answerChat(messages, { config, checkRateLimit, embedQuery, searchEvidence }) {
   const rateLimit = await checkRateLimit();
+  if (!rateLimit || typeof rateLimit.success !== "boolean") {
+    throw new Error("Chat rate limiter unavailable");
+  }
   if (!rateLimit.success) {
     return result(429, { error: "rate_limited" });
   }
@@ -32,9 +35,20 @@ export async function answerChat(messages, { config, checkRateLimit, embedQuery,
   }
 
   const searchResult = await searchEvidence(vector);
-  const approvedMatch = (searchResult?.matches ?? []).find((match) =>
+  const matches = searchResult?.matches;
+  if (
+    !Array.isArray(matches) ||
+    matches.some((match) =>
+      !match ||
+      !Number.isFinite(match.score) ||
+      typeof match.metadata?.text !== "string"
+    )
+  ) {
+    throw new Error("Assistant retrieval unavailable");
+  }
+
+  const approvedMatch = matches.find((match) =>
     match?.metadata?.text === APPROVED_EVIDENCE &&
-    Number.isFinite(match.score) &&
     match.score >= config.relevanceThreshold
   );
   if (!approvedMatch) {

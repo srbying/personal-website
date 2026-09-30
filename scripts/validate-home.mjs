@@ -7,6 +7,7 @@ const root = process.cwd();
 
 const homeDataPath = "src/data/home.ts";
 const homePagePath = "src/pages/index.astro";
+const portfolioChatPath = "src/components/PortfolioChat.astro";
 const experienceDataPath = "src/data/experience.ts";
 const packagePath = "package.json";
 
@@ -133,9 +134,10 @@ assert(existsSync(path.join(root, homeDataPath)), `Missing ${homeDataPath}`);
 assert(existsSync(path.join(root, homePagePath)), `Missing ${homePagePath}`);
 assert(existsSync(path.join(root, experienceDataPath)), `Missing ${experienceDataPath}`);
 
-const [homeData, homePage, experienceData, packageJsonSource] = await Promise.all([
+const [homeData, homePage, portfolioChat, experienceData, packageJsonSource] = await Promise.all([
   readProjectFile(homeDataPath),
   readProjectFile(homePagePath),
+  readProjectFile(portfolioChatPath),
   readProjectFile(experienceDataPath),
   readProjectFile(packagePath)
 ]);
@@ -160,8 +162,11 @@ for (const snippet of heroText) {
 }
 
 assert(
-  homePage.includes("heroLandscape") && homePage.includes("heroLandscape.alt"),
-  "Expected homepage hero to use the approved Hero Landscape asset and alt text"
+  homePage.includes('import PortfolioChat from "../components/PortfolioChat.astro"') &&
+    homePage.includes("<PortfolioChat />") &&
+    portfolioChat.includes('id="portfolio-chat-title"') &&
+    portfolioChat.includes("homeHero.ctas.map"),
+  "Expected the homepage's primary Chat Entry to render its heading and established hero CTAs"
 );
 assert(
   !homePage.includes("brandAssets") && !homePage.includes("logoLockup"),

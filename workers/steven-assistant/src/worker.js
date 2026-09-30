@@ -28,7 +28,7 @@ export default {
     try {
       config = loadWorkerConfig(env);
     } catch {
-      return jsonResponse({ error: "service_unavailable" }, 503);
+      return jsonResponse({ error: "assistant_unavailable" }, 503);
     }
 
     const options = { origin, allowedOrigins: config.allowedOrigins };

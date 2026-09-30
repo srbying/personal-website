@@ -18,27 +18,25 @@ function createEnvironment(overrides = {}) {
     RELEVANCE_THRESHOLD: "0.5",
     ALLOWED_ORIGINS_JSON: JSON.stringify([TEST_ORIGIN]),
     CHAT_LIMITER: {
-      limit: async () => {
-        calls.rateLimit += 1;
-        return { success: true };
-      }
+      limit: async () => ({ success: true })
     },
     AI: {
-      run: async (model, input) => {
-        calls.embeddings.push({ model, input });
-        return { data: [[0.1, 0.2]] };
-      }
+      run: async () => ({ data: [[0.1, 0.2]] })
     },
     KNOWLEDGE: {
-      query: async (vector, options) => {
-        calls.searches.push({ vector, options });
-        return {
-          matches: [{ score: 0.9, metadata: { text: APPROVED_EVIDENCE } }]
-        };
-      }
+      query: async () => ({
+        matches: [{ score: 0.9, metadata: { text: APPROVED_EVIDENCE } }]
+      })
     },
     ...overrides
   };
+
+  const limiter = env.CHAT_LIMITER.limit;
+  const ai = env.AI.run;
+  const knowledge = env.KNOWLEDGE.query;
+  env.CHAT_LIMITER = { limit: (...args) => { calls.rateLimit += 1; return limiter(...args); } };
+  env.AI = { run: (...args) => { calls.embeddings.push({ model: args[0], input: args[1] }); return ai(...args); } };
+  env.KNOWLEDGE = { query: (...args) => { calls.searches.push({ vector: args[0], options: args[1] }); return knowledge(...args); } };
 
   return { env, calls };
 }
@@ -178,12 +176,12 @@ test("malformed, blank, oversized, and excessive requests are rejected", async (
 test("missing or invalid runtime configuration fails closed", async () => {
   const missing = await worker.fetch(makeRequest({ body: "{}" }), {});
   assert.equal(missing.status, 503);
-  assert.deepEqual(await missing.json(), { error: "service_unavailable" });
+  assert.deepEqual(await missing.json(), { error: "assistant_unavailable" });
 
   const { env } = createEnvironment({ RELEVANCE_THRESHOLD: "1.1" });
   const invalid = await worker.fetch(makeRequest({ body: "{}" }), env);
   assert.equal(invalid.status, 503);
-  assert.deepEqual(await invalid.json(), { error: "service_unavailable" });
+  assert.deepEqual(await invalid.json(), { error: "assistant_unavailable" });
 });
 
 test("rate limiting and unapproved retrieval matches cannot produce an answer", async () => {
@@ -195,6 +193,8 @@ test("rate limiting and unapproved retrieval matches cannot produce an answer", 
   ], limited.env);
   assert.equal(limitedResponse.status, 429);
   assert.deepEqual(await limitedResponse.json(), { error: "rate_limited" });
+  assert.equal(limited.calls.embeddings.length, 0);
+  assert.equal(limited.calls.searches.length, 0);
 
   const unapproved = createEnvironment({
     KNOWLEDGE: {
@@ -206,6 +206,68 @@ test("rate limiting and unapproved retrieval matches cannot produce an answer", 
   const response = await sendMessages([
     { role: "user", content: "What is Steven's role?" }
   ], unapproved.env);
+  assert.deepEqual(await response.json(), {
+    status: "insufficient",
+    answer: ANSWERS.missing
+  });
+});
+
+test("limiter, AI, and Vectorize failures return the same fail-closed response", async () => {
+  const failures = [
+    {
+      label: "limiter error",
+      overrides: { CHAT_LIMITER: { limit: async () => { throw new Error("limiter down"); } } },
+      expectedEmbeddings: 0,
+      expectedSearches: 0
+    },
+    {
+      label: "AI capacity error",
+      overrides: { AI: { run: async () => { throw new Error("quota exhausted"); } } },
+      expectedEmbeddings: 1,
+      expectedSearches: 0
+    },
+    {
+      label: "invalid embedding",
+      overrides: { AI: { run: async () => ({ data: [[0.1, Infinity]] }) } },
+      expectedEmbeddings: 1,
+      expectedSearches: 0
+    },
+    {
+      label: "Vectorize storage error",
+      overrides: { KNOWLEDGE: { query: async () => { throw new Error("index unavailable"); } } },
+      expectedEmbeddings: 1,
+      expectedSearches: 1
+    },
+    {
+      label: "malformed Vectorize result",
+      overrides: { KNOWLEDGE: { query: async () => ({ matches: null }) } },
+      expectedEmbeddings: 1,
+      expectedSearches: 1
+    }
+  ];
+
+  for (const { label, overrides, expectedEmbeddings, expectedSearches } of failures) {
+    const { env, calls } = createEnvironment(overrides);
+    const response = await sendMessages([
+      { role: "user", content: "What is Steven's role?" }
+    ], env);
+
+    assert.equal(response.status, 503, label);
+    assert.deepEqual(await response.json(), { error: "assistant_unavailable" }, label);
+    assert.equal(calls.embeddings.length, expectedEmbeddings, `${label}: embedding calls`);
+    assert.equal(calls.searches.length, expectedSearches, `${label}: retrieval calls`);
+  }
+});
+
+test("a valid empty retrieval remains an ordinary insufficient-evidence answer", async () => {
+  const { env } = createEnvironment({
+    KNOWLEDGE: { query: async () => ({ matches: [] }) }
+  });
+  const response = await sendMessages([
+    { role: "user", content: "What is Steven's role?" }
+  ], env);
+
+  assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     status: "insufficient",
     answer: ANSWERS.missing
