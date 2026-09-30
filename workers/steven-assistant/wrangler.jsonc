@@ -16,6 +16,17 @@
       "remote": true
     }
   ],
+  "d1_databases": [
+    {
+      "binding": "CONVERSATION_HISTORY",
+      "database_name": "steven-assistant-history",
+      "database_id": "a5740f78-2250-44b1-972e-1f5c73533707",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
   "ratelimits": [
     {
       "name": "CHAT_LIMITER",

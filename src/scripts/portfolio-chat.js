@@ -7,13 +7,19 @@ const REQUEST_TIMEOUT_MS = 20000;
 
 export const CHAT_UNAVAILABLE_MESSAGE = "AI answers are temporarily unavailable.";
 
+function isConversationId(value) {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function isChatResponse(value) {
   return Boolean(
     value &&
     ["answered", "insufficient"].includes(value.status) &&
     typeof value.answer === "string" &&
     value.answer.trim().length > 0 &&
-    value.answer.length <= MAX_ANSWER_LENGTH
+    value.answer.length <= MAX_ANSWER_LENGTH &&
+    (!Object.hasOwn(value, "conversationId") || isConversationId(value.conversationId))
   );
 }
 
@@ -25,6 +31,7 @@ export function createPortfolioChat({
 }) {
   let state = { status: "ready", message: "" };
   let conversation = [];
+  let conversationId = null;
   let failedRequest = null;
   const limitsUrl = new URL(apiUrl);
   limitsUrl.pathname = `${limitsUrl.pathname.replace(/\/$/, "")}/limits`;
@@ -50,10 +57,12 @@ export function createPortfolioChat({
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
+      const payload = { messages };
+      if (conversationId) payload.conversationId = conversationId;
       const response = await fetchImpl(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages }),
+        body: JSON.stringify(payload),
         signal: controller.signal
       });
       if (!response.ok) throw new Error("Chat request failed");
@@ -62,6 +71,7 @@ export function createPortfolioChat({
       if (!isChatResponse(result)) throw new Error("Chat response was invalid");
 
       const answer = result.answer.trim();
+      if (result.conversationId) conversationId = result.conversationId;
       conversation = [...messages, { role: "assistant", content: answer }].slice(-MAX_MESSAGES);
       failedRequest = null;
       publish({

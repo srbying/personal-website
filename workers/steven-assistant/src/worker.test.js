@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import worker from "./worker.js";
+import { HISTORY_CLEANUP_INTERVAL_MS, MAX_HISTORY_RETENTION_MS } from "./chat/history.js";
 import { ANSWERS, APPROVED_EVIDENCE } from "./chat/policy.js";
 
 const TEST_ORIGIN = "https://portfolio.test";
 
 function createEnvironment(overrides = {}) {
-  const calls = { rateLimit: 0, embeddings: [], searches: [] };
+  const calls = { rateLimit: 0, embeddings: [], searches: [], historyStatements: [] };
   const env = {
     EMBEDDING_MODEL: "@cf/test/embedding-model",
     EMBEDDING_DIMENSIONS: "2",
@@ -26,6 +27,17 @@ function createEnvironment(overrides = {}) {
     KNOWLEDGE: {
       query: async () => ({
         matches: [{ score: 0.9, metadata: { text: APPROVED_EVIDENCE } }]
+      })
+    },
+    CONVERSATION_HISTORY: {
+      prepare: (sql) => ({
+        bind: (...values) => ({
+          run: async () => {
+            calls.historyStatements.push({ sql, values });
+            return { success: true, meta: { changes: 1 } };
+          },
+          all: async () => ({ results: [] })
+        })
       })
     },
     ...overrides
@@ -51,9 +63,11 @@ function makeRequest({ body, method = "POST", origin = TEST_ORIGIN } = {}) {
   });
 }
 
-async function sendMessages(messages, env) {
+async function sendMessages(messages, env, conversationId) {
+  const body = { messages };
+  if (conversationId !== undefined) body.conversationId = conversationId;
   return worker.fetch(
-    makeRequest({ body: JSON.stringify({ messages }) }),
+    makeRequest({ body: JSON.stringify(body) }),
     env
   );
 }
@@ -82,18 +96,20 @@ test("role questions and follow-ups return only the approved role answer", async
   const roleBody = await roleResponse.json();
 
   assert.equal(roleResponse.status, 200);
-  assert.deepEqual(roleBody, { status: "answered", answer: ANSWERS.role });
+  assert.equal(roleBody.status, "answered");
+  assert.equal(roleBody.answer, ANSWERS.role);
+  assert.match(roleBody.conversationId, /^[0-9a-f-]{36}$/i);
   assert.equal(roleResponse.headers.get("access-control-allow-origin"), TEST_ORIGIN);
 
   const followUpResponse = await sendMessages([
     { role: "user", content: "What is Steven's role?" },
-    { role: "assistant", content: "He is an engineering manager." },
+    { role: "assistant", content: "Manager." },
     { role: "user", content: "Tell me more about that." }
-  ], env);
-  assert.deepEqual(await followUpResponse.json(), {
-    status: "answered",
-    answer: ANSWERS.role
-  });
+  ], env, roleBody.conversationId);
+  const followUpBody = await followUpResponse.json();
+  assert.equal(followUpBody.status, "answered");
+  assert.equal(followUpBody.answer, ANSWERS.role);
+  assert.equal(followUpBody.conversationId, roleBody.conversationId);
   assert.equal(calls.embeddings.length, 2);
   assert.equal(calls.searches.length, 2);
 });
@@ -104,18 +120,21 @@ test("unsupported and negative-fit questions keep their fixed safe responses", a
   const unsupported = await sendMessages([
     { role: "user", content: "What technologies does Steven use?" }
   ], env);
-  assert.deepEqual(await unsupported.json(), {
-    status: "insufficient",
-    answer: ANSWERS.missing
-  });
+  const unsupportedBody = await unsupported.json();
+  assert.equal(unsupportedBody.status, "insufficient");
+  assert.equal(unsupportedBody.answer, ANSWERS.missing);
+  assert.match(unsupportedBody.conversationId, /^[0-9a-f-]{36}$/i);
 
   const negativeFit = await sendMessages([
     { role: "user", content: "Is Steven a bad fit?" }
   ], env);
-  assert.deepEqual(await negativeFit.json(), {
-    status: "answered",
-    answer: ANSWERS.strengthsFocus
-  });
+  const negativeFitBody = await negativeFit.json();
+  assert.equal(negativeFitBody.status, "answered");
+  assert.equal(negativeFitBody.answer, ANSWERS.strengthsFocus);
+  assert.deepEqual(calls.historyStatements.map(({ values }) => values.slice(1, 3)), [
+    ["What technologies does Steven use?", ANSWERS.missing],
+    ["Is Steven a bad fit?", ANSWERS.strengthsFocus]
+  ]);
   assert.equal(calls.embeddings.length, 0);
   assert.equal(calls.searches.length, 0);
 });
@@ -129,10 +148,9 @@ test("prompt injection cannot add claims to the fixed approved answer", async ()
     }
   ], env);
 
-  assert.deepEqual(await response.json(), {
-    status: "answered",
-    answer: ANSWERS.role
-  });
+  const body = await response.json();
+  assert.equal(body.status, "answered");
+  assert.equal(body.answer, ANSWERS.role);
 });
 
 test("malformed, blank, oversized, and excessive requests are rejected", async () => {
@@ -206,10 +224,9 @@ test("rate limiting and unapproved retrieval matches cannot produce an answer", 
   const response = await sendMessages([
     { role: "user", content: "What is Steven's role?" }
   ], unapproved.env);
-  assert.deepEqual(await response.json(), {
-    status: "insufficient",
-    answer: ANSWERS.missing
-  });
+  const body = await response.json();
+  assert.equal(body.status, "insufficient");
+  assert.equal(body.answer, ANSWERS.missing);
 });
 
 test("limiter, AI, and Vectorize failures return the same fail-closed response", async () => {
@@ -268,8 +285,145 @@ test("a valid empty retrieval remains an ordinary insufficient-evidence answer",
   ], env);
 
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), {
-    status: "insufficient",
-    answer: ANSWERS.missing
+  const body = await response.json();
+  assert.equal(body.status, "insufficient");
+  assert.equal(body.answer, ANSWERS.missing);
+});
+
+test("completed exchanges are stored with opaque ids and cleanup-safe expiry", async () => {
+  const { env, calls } = createEnvironment();
+  const response = await sendMessages([
+    { role: "user", content: "What is Steven's professional role?" }
+  ], env);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.match(body.conversationId, /^[0-9a-f-]{36}$/i);
+  assert.equal(body.answer, ANSWERS.role);
+  assert.equal(calls.historyStatements.length, 1);
+  const [{ sql, values }] = calls.historyStatements;
+  assert.match(sql, /INSERT INTO conversation_exchanges/i);
+  assert.equal(values[0], body.conversationId);
+  assert.equal(values[1], "What is Steven's professional role?");
+  assert.equal(values[2], ANSWERS.role);
+  assert.equal(
+    values[4] - values[3],
+    MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS
+  );
+});
+
+test("follow-up exchanges reuse supplied conversation id and preserve insertion order", async () => {
+  const { env, calls } = createEnvironment();
+  const conversationId = "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32";
+
+  const first = await sendMessages([
+    { role: "user", content: "What is Steven's professional role?" }
+  ], env, conversationId);
+  const followUp = await sendMessages([
+    { role: "user", content: "What is Steven's professional role?" },
+    { role: "assistant", content: "Manager." },
+    { role: "user", content: "Can you clarify?" }
+  ], env, conversationId);
+
+  assert.equal(first.status, 200);
+  assert.equal(followUp.status, 200);
+  assert.equal((await followUp.json()).conversationId, conversationId);
+  assert.deepEqual(calls.historyStatements.map(({ values }) => [values[0], values[1]]), [
+    [conversationId, "What is Steven's professional role?"],
+    [conversationId, "Can you clarify?"]
+  ]);
+});
+
+test("invalid conversation ids are rejected without storing visitor content", async () => {
+  const { env, calls } = createEnvironment();
+  const response = await sendMessages([
+    { role: "user", content: "private question" }
+  ], env, "not-an-id");
+
+  assert.equal(response.status, 400);
+  assert.equal(calls.historyStatements.length, 0);
+});
+
+test("rate-limited and failed requests are not stored", async () => {
+  const limited = createEnvironment({
+    CHAT_LIMITER: { limit: async () => ({ success: false }) }
   });
+  const limitedResponse = await sendMessages([
+    { role: "user", content: "What is Steven's professional role?" }
+  ], limited.env);
+
+  const failed = createEnvironment({
+    AI: { run: async () => { throw new Error("AI unavailable"); } }
+  });
+  const failedResponse = await sendMessages([
+    { role: "user", content: "What is Steven's professional role?" }
+  ], failed.env);
+
+  assert.equal(limitedResponse.status, 429);
+  assert.equal(failedResponse.status, 503);
+  assert.equal(limited.calls.historyStatements.length, 0);
+  assert.equal(failed.calls.historyStatements.length, 0);
+});
+
+test("history write failure returns generic unavailable response without transcript", async () => {
+  const { env } = createEnvironment({
+    CONVERSATION_HISTORY: {
+      prepare: () => ({
+        bind: () => ({ run: async () => { throw new Error("write failed: private question"); } })
+      })
+    }
+  });
+  const logs = [];
+  const originals = Object.fromEntries(["debug", "info", "log", "warn", "error"].map((method) => [method, console[method]]));
+  for (const method of Object.keys(originals)) {
+    console[method] = (...values) => logs.push(values.map(String).join(" "));
+  }
+  let response;
+  try {
+    response = await sendMessages([
+      { role: "user", content: "private question" }
+    ], env);
+  } finally {
+    for (const [method, original] of Object.entries(originals)) console[method] = original;
+  }
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "assistant_unavailable" });
+  assert.equal(response.headers.get("content-type"), "application/json; charset=utf-8");
+  assert.deepEqual(logs, []);
+});
+
+test("unsuccessful D1 write results fail closed", async () => {
+  const { env } = createEnvironment({
+    CONVERSATION_HISTORY: {
+      prepare: () => ({
+        bind: () => ({ run: async () => ({ success: false }) })
+      })
+    }
+  });
+  const response = await sendMessages([
+    { role: "user", content: "private question" }
+  ], env);
+
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "assistant_unavailable" });
+});
+
+test("private history has no visitor-facing read or administration route", async () => {
+  const { env } = createEnvironment();
+  const response = await worker.fetch(new Request("https://worker.test/api/history"), env);
+
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "not_found" });
+});
+
+test("hourly scheduled handler deletes exchanges at or past expiry", async () => {
+  const { env, calls } = createEnvironment();
+  assert.equal(typeof worker.scheduled, "function");
+
+  await worker.scheduled({ cron: "0 * * * *", scheduledTime: Date.now() }, env);
+
+  assert.equal(calls.historyStatements.length, 1);
+  assert.match(calls.historyStatements[0].sql, /DELETE FROM conversation_exchanges/i);
+  assert.match(calls.historyStatements[0].sql, /expires_at\s*<=\s*\?/i);
 });

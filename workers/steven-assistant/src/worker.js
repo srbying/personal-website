@@ -1,7 +1,10 @@
 import { loadWorkerConfig } from "./config.js";
 import { answerChat } from "./chat/service.js";
+import { createConversationHistory } from "./chat/history.js";
 import { validateChatRequest } from "./chat/messages.js";
 import { jsonResponse, readBoundedJson } from "./utils/http.js";
+
+const HISTORY_RETENTION_CRON = "0 * * * *";
 
 function createChatDependencies(env, config, request) {
   return {
@@ -68,9 +71,28 @@ export default {
         chatRequest.messages,
         createChatDependencies(env, config, request)
       );
-      return jsonResponse(outcome.body, outcome.status, options);
+      if (
+        outcome.status !== 200 ||
+        !["answered", "insufficient"].includes(outcome.body?.status) ||
+        typeof outcome.body?.answer !== "string"
+      ) {
+        return jsonResponse(outcome.body, outcome.status, options);
+      }
+
+      const conversationId = chatRequest.conversationId ?? crypto.randomUUID();
+      await createConversationHistory(env.CONVERSATION_HISTORY).recordExchange({
+        conversationId,
+        question: chatRequest.messages.at(-1).content.trim(),
+        answer: outcome.body.answer
+      });
+      return jsonResponse({ ...outcome.body, conversationId }, outcome.status, options);
     } catch {
       return jsonResponse({ error: "assistant_unavailable" }, 503, options);
     }
+  },
+
+  async scheduled(controller, env) {
+    if (controller.cron !== HISTORY_RETENTION_CRON) return;
+    await createConversationHistory(env.CONVERSATION_HISTORY).deleteExpired();
   }
 };
