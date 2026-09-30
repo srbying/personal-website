@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import worker from "./worker.js";
+import { HISTORY_CLEANUP_INTERVAL_MS, MAX_HISTORY_RETENTION_MS } from "./chat/history.js";
 import { ANSWERS, APPROVED_EVIDENCE } from "./chat/policy.js";
 
 const TEST_ORIGIN = "https://portfolio.test";
@@ -289,7 +290,7 @@ test("a valid empty retrieval remains an ordinary insufficient-evidence answer",
   assert.equal(body.answer, ANSWERS.missing);
 });
 
-test("completed exchanges are stored with an opaque conversation id and seven-day expiry", async () => {
+test("completed exchanges are stored with opaque ids and cleanup-safe expiry", async () => {
   const { env, calls } = createEnvironment();
   const response = await sendMessages([
     { role: "user", content: "What is Steven's professional role?" }
@@ -305,7 +306,10 @@ test("completed exchanges are stored with an opaque conversation id and seven-da
   assert.equal(values[0], body.conversationId);
   assert.equal(values[1], "What is Steven's professional role?");
   assert.equal(values[2], ANSWERS.role);
-  assert.equal(values[4] - values[3], 7 * 24 * 60 * 60 * 1000);
+  assert.equal(
+    values[4] - values[3],
+    MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS
+  );
 });
 
 test("follow-up exchanges reuse supplied conversation id and preserve insertion order", async () => {

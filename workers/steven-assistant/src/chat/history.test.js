@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
-import { createConversationHistory, MAX_HISTORY_RETENTION_MS } from "./history.js";
+import {
+  createConversationHistory,
+  HISTORY_CLEANUP_INTERVAL_MS,
+  MAX_HISTORY_RETENTION_MS
+} from "./history.js";
 
 const migration = await readFile(
   new URL("../../migrations/0001_conversation_history.sql", import.meta.url),
@@ -42,7 +46,7 @@ async function withHistory(run) {
   }
 }
 
-test("stores each completed exchange as a pending row with seven-day expiry", async () => {
+test("stores each completed exchange as a pending row within seven-day limit", async () => {
   await withHistory(async (history, database) => {
     const createdAt = 1_000;
     await history.recordExchange({
@@ -61,7 +65,7 @@ test("stores each completed exchange as a pending row with seven-day expiry", as
       question: "Question one",
       answer: "Answer one",
       created_at: createdAt,
-      expires_at: createdAt + MAX_HISTORY_RETENTION_MS,
+      expires_at: createdAt + MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS,
       digest_delivery_state: "pending"
     });
   });
@@ -105,10 +109,12 @@ test("digest selection groups conversations, orders exchanges, and excludes expi
   });
 });
 
-test("hourly cleanup deletes expired exchanges at the seven-day boundary", async () => {
+test("hourly cleanup deletes expired exchanges by the seven-day limit", async () => {
   await withHistory(async (history, database) => {
     const createdAt = 1_000;
-    const expiresAt = createdAt + MAX_HISTORY_RETENTION_MS;
+    const expiresAt = createdAt + MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS;
+    const cleanupAt =
+      Math.ceil(expiresAt / HISTORY_CLEANUP_INTERVAL_MS) * HISTORY_CLEANUP_INTERVAL_MS;
     await history.recordExchange({
       conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
       question: "Expired question",
@@ -118,7 +124,8 @@ test("hourly cleanup deletes expired exchanges at the seven-day boundary", async
 
     assert.equal((await history.listDigestEligible(expiresAt - 1)).length, 1);
     assert.equal((await history.listDigestEligible(expiresAt)).length, 0);
-    await history.deleteExpired(expiresAt);
+    assert.ok(cleanupAt <= createdAt + MAX_HISTORY_RETENTION_MS);
+    await history.deleteExpired(cleanupAt);
 
     const remaining = await database.prepare(
       "SELECT COUNT(*) AS count FROM conversation_exchanges"

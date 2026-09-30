@@ -1,4 +1,5 @@
 export const MAX_HISTORY_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+export const HISTORY_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 
 async function run(statement) {
   const result = await statement.run();
@@ -9,7 +10,7 @@ async function run(statement) {
 export function createConversationHistory(database) {
   return Object.freeze({
     async recordExchange({ conversationId, question, answer, createdAt = Date.now() }) {
-      const expiresAt = createdAt + MAX_HISTORY_RETENTION_MS;
+      const expiresAt = createdAt + MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS;
       return run(database.prepare(`
         INSERT INTO conversation_exchanges
           (conversation_id, question, answer, created_at, expires_at)
