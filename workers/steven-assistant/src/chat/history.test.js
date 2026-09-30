@@ -8,15 +8,28 @@ import {
   MAX_HISTORY_RETENTION_MS
 } from "./history.js";
 
-const migration = await readFile(
-  new URL("../../migrations/0001_conversation_history.sql", import.meta.url),
-  "utf8"
+const migrations = await Promise.all(
+  ["0001_conversation_history.sql", "0002_daily_chat_digest.sql"].map((name) =>
+    readFile(new URL(`../../migrations/${name}`, import.meta.url), "utf8")
+  )
 );
 
 async function withHistory(run) {
   const sqlite = new DatabaseSync(":memory:");
   const database = {
     exec: (sql) => sqlite.exec(sql),
+    async batch(statements) {
+      sqlite.exec("BEGIN");
+      try {
+        const results = [];
+        for (const statement of statements) results.push(await statement.run());
+        sqlite.exec("COMMIT");
+        return results;
+      } catch (error) {
+        sqlite.exec("ROLLBACK");
+        throw error;
+      }
+    },
     prepare(sql) {
       let values = [];
       const statement = {
@@ -39,7 +52,7 @@ async function withHistory(run) {
     }
   };
   try {
-    database.exec(migration);
+    for (const migration of migrations) database.exec(migration);
     await run(createConversationHistory(database), database);
   } finally {
     sqlite.close();
@@ -131,5 +144,105 @@ test("hourly cleanup deletes expired exchanges by the seven-day limit", async ()
       "SELECT COUNT(*) AS count FROM conversation_exchanges"
     ).first();
     assert.equal(remaining.count, 0);
+  });
+});
+
+test("digest retries keep one identity and exclude exchanges added later", async () => {
+  await withHistory(async (history) => {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "First question",
+      answer: "First answer",
+      createdAt: 1_000
+    });
+
+    const firstAttempt = await history.claimNextDigest(1_000);
+    assert.ok(firstAttempt?.digestId);
+    assert.deepEqual(firstAttempt.exchanges.map(({ question }) => question), ["First question"]);
+
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Newer question",
+      answer: "Newer answer",
+      createdAt: 2_000
+    });
+
+    const retry = await history.claimNextDigest(3_000);
+    assert.equal(retry.digestId, firstAttempt.digestId);
+    assert.deepEqual(retry.exchanges.map(({ question }) => question), ["First question"]);
+  });
+});
+
+test("delivery confirmation deletes only its digest exchanges and is idempotent", async () => {
+  await withHistory(async (history) => {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Included question",
+      answer: "Included answer",
+      createdAt: 1_000
+    });
+    const digest = await history.claimNextDigest(1_000);
+
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Newer question",
+      answer: "Newer answer",
+      createdAt: 2_000
+    });
+
+    assert.equal(await history.confirmDigestDelivered(digest.digestId), 1);
+    assert.equal(await history.confirmDigestDelivered(digest.digestId), 0);
+    assert.deepEqual((await history.listDigestEligible(3_000)).map(({ question }) => question), [
+      "Newer question"
+    ]);
+  });
+});
+
+test("provider attempts map delivery callbacks to a stable digest after confirmation", async () => {
+  await withHistory(async (history, database) => {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Question",
+      answer: "Answer",
+      createdAt: 1_000
+    });
+    const digest = await history.claimNextDigest(1_000);
+    await history.recordDigestAttempt({
+      digestId: digest.digestId,
+      providerMessageId: "provider-email-1",
+      attemptedAt: 2_000
+    });
+
+    assert.equal(await history.findDigestIdByProviderMessageId("provider-email-1"), digest.digestId);
+    assert.equal(await history.confirmDigestDelivered(digest.digestId, 3_000), 1);
+    assert.equal(await history.findDigestIdByProviderMessageId("provider-email-1"), digest.digestId);
+    const attempt = await database.prepare(`
+      SELECT delivered_at FROM conversation_digest_attempts WHERE provider_message_id = ?
+    `).bind("provider-email-1").first();
+    assert.equal(attempt.delivered_at, 3_000);
+    assert.equal(await history.confirmDigestDelivered(digest.digestId, 4_000), 0);
+  });
+});
+
+test("hourly expiry removes undelivered rows and their provider attempt records", async () => {
+  await withHistory(async (history) => {
+    const createdAt = 1_000;
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Expired question",
+      answer: "Expired answer",
+      createdAt
+    });
+    const digest = await history.claimNextDigest(createdAt);
+    await history.recordDigestAttempt({
+      digestId: digest.digestId,
+      providerMessageId: "expired-provider-email",
+      attemptedAt: createdAt
+    });
+
+    await history.deleteExpired(createdAt + MAX_HISTORY_RETENTION_MS);
+
+    assert.equal((await history.listDigestEligible(createdAt + MAX_HISTORY_RETENTION_MS)).length, 0);
+    assert.equal(await history.findDigestIdByProviderMessageId("expired-provider-email"), null);
   });
 });
