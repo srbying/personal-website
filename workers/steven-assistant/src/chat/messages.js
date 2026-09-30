@@ -4,6 +4,11 @@ function hasExactKeys(value, expectedKeys) {
   return keys.length === expectedKeys.length && expectedKeys.every((key) => keys.includes(key));
 }
 
+function isConversationId(value) {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
 function isValidMessageList(messages, config) {
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > config.maxMessages) {
     return false;
@@ -24,10 +29,17 @@ function isValidMessageList(messages, config) {
 }
 
 export function validateChatRequest(body, config) {
-  if (!hasExactKeys(body, ["messages"]) || !isValidMessageList(body.messages, config)) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
+  const hasConversationId = Object.hasOwn(body, "conversationId");
+  const expectedKeys = hasConversationId ? ["messages", "conversationId"] : ["messages"];
+  if (
+    !hasExactKeys(body, expectedKeys) ||
+    (hasConversationId && !isConversationId(body.conversationId)) ||
+    !isValidMessageList(body.messages, config)
+  ) {
     return null;
   }
-  return { messages: body.messages };
+  return { messages: body.messages, conversationId: body.conversationId ?? null };
 }
 
 export function getPreviousUserQuestions(messages) {

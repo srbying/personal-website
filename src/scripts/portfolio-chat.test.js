@@ -160,6 +160,37 @@ test("loads Worker limits and uses them to bound chat requests", async () => {
   });
 });
 
+test("keeps Worker-issued conversation id in memory for follow-up turns", async () => {
+  const requests = [];
+  const conversationId = "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32";
+  const chat = createPortfolioChat({
+    apiUrl: API_URL,
+    fetchImpl: async (url, init) => {
+      if (new URL(url).pathname.endsWith("/limits")) return limitsResponse();
+      const body = JSON.parse(init.body);
+      requests.push(body);
+      return new Response(JSON.stringify({
+        status: "answered",
+        answer: "A safe answer.",
+        conversationId
+      }), { status: 200 });
+    }
+  });
+
+  await chat.ask("Question one");
+  await chat.ask("Question two");
+
+  assert.deepEqual(requests[0], {
+    messages: [{ role: "user", content: "Question one" }]
+  });
+  assert.equal(requests[1].conversationId, conversationId);
+  assert.deepEqual(requests[1].messages, [
+    { role: "user", content: "Question one" },
+    { role: "assistant", content: "A safe answer." },
+    { role: "user", content: "Question two" }
+  ]);
+});
+
 test("invalid Worker limits fail closed before sending the question", async () => {
   const requests = [];
   const chat = createPortfolioChat({

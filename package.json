@@ -8,7 +8,7 @@
     "dev:worker": "wrangler dev --config workers/steven-assistant/wrangler.jsonc --ip 127.0.0.1",
     "deploy:worker": "wrangler deploy --config workers/steven-assistant/wrangler.jsonc",
     "test:knowledge": "node --test workers/steven-assistant/knowledge/*.test.js",
-    "test:worker": "node --test workers/steven-assistant/src/worker.test.js",
+    "test:worker": "node --test workers/steven-assistant/src/worker.test.js workers/steven-assistant/src/chat/history.test.js",
     "test:portfolio-chat": "node --test src/scripts/portfolioChatMessages.test.js",
     "test:chat-ui": "npm run build && node --test src/scripts/portfolio-chat.test.js",
     "build": "astro build",
