@@ -177,6 +177,33 @@ test("invalid Worker limits fail closed before sending the question", async () =
   assert.ok(requests[0].endsWith("/api/chat/limits"));
 });
 
+test("Worker limits requests abort at the configured timeout", async () => {
+  let limitsSignal;
+  const chat = createPortfolioChat({
+    apiUrl: API_URL,
+    timeoutMs: 5,
+    fetchImpl: async (url, init) => {
+      if (!new URL(url).pathname.endsWith("/limits")) {
+        return new Response(JSON.stringify({ status: "answered", answer: "OK." }), { status: 200 });
+      }
+      limitsSignal = init?.signal;
+      return new Promise((_resolve, reject) => {
+        const guard = setTimeout(() => reject(new Error("Fetch did not abort")), 50);
+        limitsSignal?.addEventListener("abort", () => {
+          clearTimeout(guard);
+          reject(new DOMException("Aborted", "AbortError"));
+        }, { once: true });
+      });
+    }
+  });
+
+  await chat.ask("What is Steven's role?");
+
+  assert.ok(limitsSignal);
+  assert.equal(limitsSignal.aborted, true);
+  assert.equal(chat.getState().status, "unavailable");
+});
+
 test("bounds conversation history using the Worker message limit", async () => {
   const requestBodies = [];
   const chat = createPortfolioChat({

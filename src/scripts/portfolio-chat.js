@@ -35,9 +35,15 @@ export function createPortfolioChat({
   };
 
   const readLimits = async () => {
-    const response = await fetchImpl(limitsUrl);
-    if (!response.ok) throw new Error("Chat limits are unavailable");
-    return parseChatLimits(await response.json());
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(limitsUrl, { signal: controller.signal });
+      if (!response.ok) throw new Error("Chat limits are unavailable");
+      return parseChatLimits(await response.json());
+    } finally {
+      clearTimeout(timeout);
+    }
   };
 
   const requestAnswer = async (question, messages, isRetry) => {
