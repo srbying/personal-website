@@ -6,6 +6,7 @@ const DEFAULT_WAIT_OPTIONS = Object.freeze({
   sleep: (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds))
 });
 const MAX_VECTOR_BATCH = 1000;
+const MAX_VECTOR_GET_BY_IDS = 20;
 
 function asVectorList(value) {
   if (Array.isArray(value)) return value;
@@ -63,7 +64,7 @@ export function createKnowledgeSyncService({ source, manifest, embeddings, vecto
         await wait.sleep(delay);
       }
       failures.clear();
-      for (const group of batches(expected)) {
+      for (const group of batches(expected, MAX_VECTOR_GET_BY_IDS)) {
         const records = asVectorList(await vectorStore.getByIds(group.map(({ id }) => id)));
         const found = new Map(records.map((record) => [record.id, record]));
         for (const item of group) {
@@ -152,7 +153,7 @@ export function createKnowledgeSyncService({ source, manifest, embeddings, vecto
         return { ok: false, missing: approved.chunks.map(({ id }) => id), changed: [], stale: [], plan };
       }
       const records = [];
-      for (const group of batches(previous.chunks)) {
+      for (const group of batches(previous.chunks, MAX_VECTOR_GET_BY_IDS)) {
         records.push(...asVectorList(await vectorStore.getByIds(group.map(({ id }) => id))));
       }
       const found = new Map(records.map((record) => [record.id, record]));
