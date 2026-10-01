@@ -73,6 +73,8 @@ test("provider acceptance records an attempt but does not confirm delivery", asy
     provider: {
       sendDigest: async (message) => {
         assert.equal(message.digestId, "stable-digest-id");
+        assert.equal(message.date, "2026-09-30");
+        assert.equal(message.subject, "Daily Chat Digest — 2026-09-30");
         return { id: "provider-email-id" };
       }
     },
@@ -102,8 +104,8 @@ test("retry sends same stable digest identity", async () => {
     }),
     recordDigestAttempt: async () => {}
   };
-  const provider = { sendDigest: async ({ digestId }) => {
-    sent.push(digestId);
+  const provider = { sendDigest: async ({ digestId, date }) => {
+    sent.push({ digestId, date });
     return { id: `provider-email-${sent.length}` };
   } };
 
@@ -118,7 +120,10 @@ test("retry sends same stable digest identity", async () => {
     scheduledTime: Date.parse("2026-10-01T12:00:00Z")
   });
 
-  assert.deepEqual(sent, ["retry-stable-id", "retry-stable-id"]);
+  assert.deepEqual(sent, [
+    { digestId: "retry-stable-id", date: "2026-09-30" },
+    { digestId: "retry-stable-id", date: "2026-10-01" }
+  ]);
 });
 
 test("provider failure leaves digest attempt unrecorded for a later retry", async () => {

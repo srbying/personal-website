@@ -681,6 +681,22 @@ test("invalid Resend webhook signature cannot delete history", async () => {
   assert.equal(calls.historyStatements.length, 0);
 });
 
+test("verified delivery for an unknown email is acknowledged without deleting history", async () => {
+  const { env, calls } = createEnvironment({ RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET });
+  const body = JSON.stringify({
+    type: "email.delivered",
+    data: { email_id: "unknown-email" }
+  });
+  const response = await worker.fetch(new Request("https://worker.test/webhooks/resend", {
+    method: "POST",
+    headers: await signedWebhookHeaders(body),
+    body
+  }), env);
+
+  assert.equal(response.status, 204);
+  assert.ok(!calls.historyStatements.some(({ sql }) => /DELETE|UPDATE/i.test(sql)));
+});
+
 test("verified email.sent event does not delete Conversation History", async () => {
   const { env, calls } = createEnvironment({ RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET });
   const body = JSON.stringify({

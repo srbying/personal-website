@@ -67,7 +67,7 @@ export function createResendProvider({
   fetchImpl = globalThis.fetch
 }) {
   return Object.freeze({
-    async sendDigest({ digestId, subject, text }) {
+    async sendDigest({ digestId, date, subject, text }) {
       if (![apiKey, from, to].every((value) => typeof value === "string" && value.trim())) {
         throw new Error("Resend send configuration is incomplete");
       }
@@ -76,7 +76,7 @@ export function createResendProvider({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "Idempotency-Key": digestId
+          "Idempotency-Key": `${date}:${digestId}`
         },
         body: JSON.stringify({
           from,

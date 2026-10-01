@@ -37,7 +37,7 @@ async function handleResendWebhook(request, env) {
     const history = createConversationHistory(env.CONVERSATION_HISTORY);
     const digestId = event.digestId ??
       await history.findDigestIdByProviderMessageId(event.providerMessageId);
-    if (!digestId) return jsonResponse({ error: "delivery_not_ready" }, 503);
+    if (!digestId) return jsonResponse({}, 204);
     await history.confirmDigestDelivered(digestId);
     return jsonResponse({}, 204);
   } catch {

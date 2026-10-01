@@ -28,7 +28,7 @@ async function signedHeaders(rawBody, now = 1_800_000_000_000) {
   });
 }
 
-test("Resend adapter keeps credentials server-side and sends stable digest idempotency key", async () => {
+test("Resend adapter keys retries by Eastern date while keeping the digest tag stable", async () => {
   let request;
   const provider = createResendProvider({
     apiKey: API_KEY,
@@ -43,6 +43,7 @@ test("Resend adapter keeps credentials server-side and sends stable digest idemp
 
   const accepted = await provider.sendDigest({
     digestId: "stable-digest-id",
+    date: "2026-09-30",
     subject: "Daily Chat Digest",
     text: "Question: Hello\nAnswer: Hi"
   });
@@ -50,7 +51,7 @@ test("Resend adapter keeps credentials server-side and sends stable digest idemp
   assert.deepEqual(accepted, { id: "resend-email-1" });
   assert.equal(request.url, "https://api.resend.com/emails");
   assert.equal(request.init.headers.Authorization, `Bearer ${API_KEY}`);
-  assert.equal(request.init.headers["Idempotency-Key"], "stable-digest-id");
+  assert.equal(request.init.headers["Idempotency-Key"], "2026-09-30:stable-digest-id");
   assert.deepEqual(JSON.parse(request.init.body), {
     from: "Steven <digest@example.com>",
     to: ["steven@example.com"],

@@ -20,13 +20,17 @@ function easternParts(value) {
   return Object.fromEntries(parts.map(({ type, value: part }) => [type, part]));
 }
 
+function easternDate(value) {
+  const { year, month, day } = easternParts(value);
+  return `${year}-${month}-${day}`;
+}
+
 export function isDigestDeliveryWindow(scheduledTime) {
   return Number(easternParts(scheduledTime).hour) === DIGEST_HOUR;
 }
 
 export function formatDigestEmail(exchanges, scheduledTime) {
-  const { year, month, day } = easternParts(scheduledTime);
-  const date = `${year}-${month}-${day}`;
+  const date = easternDate(scheduledTime);
   const conversations = new Map();
   for (const exchange of exchanges) {
     const current = conversations.get(exchange.conversationId) ?? [];
@@ -66,6 +70,7 @@ export async function sendDailyChatDigest({ history, provider, scheduledTime }) 
   const email = formatDigestEmail(digest.exchanges, now);
   const accepted = await provider.sendDigest({
     digestId: digest.digestId,
+    date: easternDate(now),
     ...email
   });
   if (!accepted || typeof accepted.id !== "string" || !accepted.id) {
