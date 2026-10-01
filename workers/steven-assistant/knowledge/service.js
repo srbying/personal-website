@@ -15,8 +15,11 @@ function asVectorList(value) {
 
 function sameVector(vector, chunk, config) {
   const metadata = vector?.metadata;
-  return vector?.id === chunk.id && Array.isArray(vector.values) &&
-    vector.values.length === config.embeddingDimensions && vector.values.every(Number.isFinite) &&
+  const values = vector?.values;
+  const hasVectorValues = (Array.isArray(values) || ArrayBuffer.isView(values)) &&
+    values.length === config.embeddingDimensions &&
+    Array.from(values).every(Number.isFinite);
+  return vector?.id === chunk.id && hasVectorValues &&
     metadata?.hash === chunk.hash && metadata?.text === chunk.text &&
     metadata?.model === config.embeddingModel && metadata?.noteId === chunk.noteId &&
     metadata?.ordinal === chunk.ordinal;

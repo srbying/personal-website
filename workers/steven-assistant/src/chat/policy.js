@@ -1,8 +1,8 @@
 export const APPROVED_EVIDENCE =
-  "Engineering Manager with 10+ years of full-stack software engineering experience and a track record of leading product-minded teams through ambiguity, delivery pressure, and technical change.";
+  "# Professional role\n\nSteven Byington is a software engineering manager.";
 
 export const ANSWERS = Object.freeze({
-  role: "Steven is an engineering manager with 10+ years of full-stack software engineering experience and a track record of leading product-minded teams through ambiguity, delivery pressure, and technical change.",
+  role: "Steven Byington is a software engineering manager.",
   missing: "This chat doesn't have enough information to answer that yet.",
   strengthsFocus: "This chat focuses on Steven's strengths and experience."
 });
