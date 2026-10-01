@@ -1,56 +1,71 @@
 {
-  "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "steven-assistant",
-  "main": "src/worker.js",
-  "workers_dev": true,
-  "preview_urls": false,
-  "compatibility_date": "2026-09-29",
-  "ai": {
-    "binding": "AI",
-    "remote": true
-  },
-  "vectorize": [
-    {
-      "binding": "KNOWLEDGE",
-      "index_name": "steven-knowledge",
-      "remote": true
-    }
-  ],
-  "d1_databases": [
-    {
-      "binding": "CONVERSATION_HISTORY",
-      "database_name": "steven-assistant-history",
-      "database_id": "a5740f78-2250-44b1-972e-1f5c73533707",
-      "migrations_dir": "migrations"
-    }
-  ],
-  "triggers": {
-    "crons": ["0 * * * *"]
-  },
-  "ratelimits": [
-    {
-      "name": "CHAT_LIMITER",
-      "namespace_id": "1001",
-      "simple": {
-        "limit": 20,
-        "period": 60
-      }
-    }
-  ],
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1,
-    "redact_query_string": false,
-    "logs": {
-      "enabled": true,
-      "head_sampling_rate": 1,
-      "persist": true,
-      "invocation_logs": true
-    },
-    "traces": {
-      "enabled": false,
-      "persist": true,
-      "head_sampling_rate": 1
-    }
-  }
+	"$schema": "../../node_modules/wrangler/config-schema.json",
+	"name": "steven-assistant",
+	"main": "src/worker.js",
+	"workers_dev": true,
+	"preview_urls": false,
+	"compatibility_date": "2026-09-29",
+	"vars": {
+		"ALLOWED_ORIGINS_JSON": "[\"https://stevenbyington.me\",\"http://localhost:4321\",\"http://127.0.0.1:4321\"]",
+		"DIGEST_RECIPIENT": "steven@stevenbyington.me",
+		"EMBEDDING_DIMENSIONS": "768",
+		"EMBEDDING_MODEL": "@cf/baai/bge-base-en-v1.5",
+		"MAX_BODY_BYTES": "3000",
+		"MAX_MESSAGE_LENGTH": "1000",
+		"MAX_MESSAGES": "8",
+		"MAX_TOTAL_MESSAGE_LENGTH": "6000",
+		"RELEVANCE_THRESHOLD": "0.35",
+		"RESEND_FROM": "Steven Byington <assistant@stevenbyington.me>",
+		"VECTOR_TOP_K": "3"
+	},
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
+	"vectorize": [
+		{
+			"binding": "KNOWLEDGE",
+			"index_name": "steven-knowledge",
+			"remote": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "CONVERSATION_HISTORY",
+			"database_name": "steven-assistant-history",
+			"database_id": "a5740f78-2250-44b1-972e-1f5c73533707",
+			"migrations_dir": "migrations"
+		}
+	],
+	"triggers": {
+		"crons": [
+			"0 * * * *"
+		]
+	},
+	"ratelimits": [
+		{
+			"name": "CHAT_LIMITER",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 20,
+				"period": 60
+			}
+		}
+	],
+	"observability": {
+		"enabled": true,
+		"head_sampling_rate": 1,
+		"redact_query_string": false,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1,
+			"persist": true,
+			"invocation_logs": true
+		},
+		"traces": {
+			"enabled": false,
+			"persist": true,
+			"head_sampling_rate": 1
+		}
+	}
 }
