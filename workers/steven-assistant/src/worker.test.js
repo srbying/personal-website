@@ -1,10 +1,83 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import worker from "./worker.js";
-import { HISTORY_CLEANUP_INTERVAL_MS, MAX_HISTORY_RETENTION_MS } from "./chat/history.js";
+import {
+  createConversationHistory,
+  HISTORY_CLEANUP_INTERVAL_MS,
+  MAX_HISTORY_RETENTION_MS
+} from "./chat/history.js";
 import { ANSWERS, APPROVED_EVIDENCE } from "./chat/policy.js";
 
 const TEST_ORIGIN = "https://portfolio.test";
+const TEST_WEBHOOK_SECRET = `whsec_${Buffer.from("test-webhook-secret").toString("base64")}`;
+const HISTORY_MIGRATIONS = await Promise.all([
+  "0001_conversation_history.sql",
+  "0002_daily_chat_digest.sql"
+].map((name) => readFile(new URL(`../migrations/${name}`, import.meta.url), "utf8")));
+
+function createSqliteHistoryBinding() {
+  const sqlite = new DatabaseSync(":memory:");
+  for (const migration of HISTORY_MIGRATIONS) sqlite.exec(migration);
+  return {
+    database: {
+      async batch(statements) {
+        sqlite.exec("BEGIN");
+        try {
+          const results = [];
+          for (const statement of statements) results.push(await statement.run());
+          sqlite.exec("COMMIT");
+          return results;
+        } catch (error) {
+          sqlite.exec("ROLLBACK");
+          throw error;
+        }
+      },
+      prepare(sql) {
+        let values = [];
+        const statement = {
+          bind(...boundValues) { values = boundValues; return statement; },
+          async run() {
+            const result = sqlite.prepare(sql).run(...values);
+            return { success: true, meta: { changes: Number(result.changes) } };
+          },
+          async all() {
+            return { success: true, results: sqlite.prepare(sql).all(...values) };
+          },
+          async first() {
+            return sqlite.prepare(sql).get(...values) ?? null;
+          }
+        };
+        return statement;
+      }
+    },
+    close: () => sqlite.close()
+  };
+}
+
+async function signedWebhookHeaders(body, now = Date.now()) {
+  const id = "event-123";
+  const timestamp = String(Math.floor(now / 1_000));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode("test-webhook-secret"),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(`${id}.${timestamp}.${body}`)
+  );
+  return new Headers({
+    "content-type": "application/json",
+    "svix-id": id,
+    "svix-timestamp": timestamp,
+    "svix-signature": `v1,${Buffer.from(signature).toString("base64")}`
+  });
+}
 
 function createEnvironment(overrides = {}) {
   const calls = { rateLimit: 0, embeddings: [], searches: [], historyStatements: [] };
@@ -36,7 +109,8 @@ function createEnvironment(overrides = {}) {
             calls.historyStatements.push({ sql, values });
             return { success: true, meta: { changes: 1 } };
           },
-          all: async () => ({ results: [] })
+          all: async () => ({ success: true, results: [] }),
+          first: async () => null
         })
       })
     },
@@ -53,10 +127,10 @@ function createEnvironment(overrides = {}) {
   return { env, calls };
 }
 
-function makeRequest({ body, method = "POST", origin = TEST_ORIGIN } = {}) {
+function makeRequest({ body, method = "POST", origin = TEST_ORIGIN, path = "/api/chat" } = {}) {
   const headers = { "content-type": "application/json" };
   if (origin) headers.origin = origin;
-  return new Request("https://worker.test/api/chat", {
+  return new Request(`https://worker.test${path}`, {
     method,
     headers,
     body: method === "POST" ? body : undefined
@@ -417,13 +491,235 @@ test("private history has no visitor-facing read or administration route", async
   assert.deepEqual(await response.json(), { error: "not_found" });
 });
 
+test("hourly scheduler keeps cleanup but skips digest sends outside Eastern 8 a.m.", async () => {
+  let sendCount = 0;
+  const { env, calls } = createEnvironment({
+    DIGEST_PROVIDER: { sendDigest: async () => { sendCount += 1; return { id: "email-1" }; } }
+  });
+
+  await worker.scheduled({
+    cron: "0 * * * *",
+    scheduledTime: Date.parse("2026-03-08T11:00:00Z")
+  }, env);
+
+  assert.equal(sendCount, 0);
+  assert.ok(calls.historyStatements.some(({ sql }) => /DELETE FROM conversation_exchanges/i.test(sql)));
+});
+
+test("scheduled digest remains pending after provider acceptance until delivery webhook", async () => {
+  const { database, close } = createSqliteHistoryBinding();
+  const history = createConversationHistory(database);
+  const scheduledTime = Date.parse("2026-03-08T12:00:00Z");
+  const sent = [];
+  try {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "What is Steven's role?",
+      answer: "Steven is a software engineering manager.",
+      createdAt: scheduledTime - 1_000
+    });
+    const { env } = createEnvironment({
+      CONVERSATION_HISTORY: database,
+      DIGEST_PROVIDER: {
+        sendDigest: async (message) => {
+          sent.push(message);
+          return { id: "resend-email-1" };
+        }
+      }
+    });
+
+    await worker.scheduled({ cron: "0 * * * *", scheduledTime }, env);
+
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].digestId, (await history.listDigestEligible(scheduledTime))[0].digestId);
+    assert.match(sent[0].text, /Question: What is Steven's role\?/);
+    assert.match(sent[0].text, /Answer: Steven is a software engineering manager\./);
+    assert.equal(await history.findDigestIdByProviderMessageId("resend-email-1"), sent[0].digestId);
+    assert.equal((await history.listDigestEligible(scheduledTime)).length, 1);
+  } finally {
+    close();
+  }
+});
+
+test("next-day retry keeps the digest identity and leaves newer exchanges for later", async () => {
+  const { database, close } = createSqliteHistoryBinding();
+  const history = createConversationHistory(database);
+  const firstSchedule = Date.parse("2026-03-08T12:00:00Z");
+  const secondSchedule = Date.parse("2026-03-09T12:00:00Z");
+  const sent = [];
+  try {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Original question",
+      answer: "Original answer",
+      createdAt: firstSchedule - 1_000
+    });
+    const { env } = createEnvironment({
+      CONVERSATION_HISTORY: database,
+      DIGEST_PROVIDER: {
+        sendDigest: async (message) => {
+          sent.push(message);
+          return { id: `resend-email-${sent.length}` };
+        }
+      }
+    });
+
+    await worker.scheduled({ cron: "0 * * * *", scheduledTime: firstSchedule }, env);
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Newer question",
+      answer: "Newer answer",
+      createdAt: firstSchedule + 1_000
+    });
+    await worker.scheduled({ cron: "0 * * * *", scheduledTime: secondSchedule }, env);
+
+    assert.equal(sent.length, 2);
+    assert.equal(sent[1].digestId, sent[0].digestId);
+    assert.match(sent[1].text, /Original question/);
+    assert.ok(!sent[1].text.includes("Newer question"));
+    assert.equal((await history.listDigestEligible(secondSchedule)).length, 2);
+  } finally {
+    close();
+  }
+});
+
+test("verified delivered webhook deletes only its included exchanges and tolerates duplicates", async () => {
+  const { database, close } = createSqliteHistoryBinding();
+  const history = createConversationHistory(database);
+  const now = Date.now();
+  try {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Included question",
+      answer: "Included answer",
+      createdAt: now - 2_000
+    });
+    const digest = await history.claimNextDigest(now);
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Newer question",
+      answer: "Newer answer",
+      createdAt: now - 1_000
+    });
+
+    const body = JSON.stringify({
+      type: "email.delivered",
+      data: {
+        email_id: "resend-email-2",
+        tags: { digest_id: digest.digestId }
+      }
+    });
+    const headers = await signedWebhookHeaders(body);
+    const request = () => new Request("https://worker.test/webhooks/resend", {
+      method: "POST",
+      headers,
+      body
+    });
+    const { env } = createEnvironment({
+      CONVERSATION_HISTORY: database,
+      RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET
+    });
+
+    assert.equal((await worker.fetch(request(), env)).status, 204);
+    assert.equal((await worker.fetch(request(), env)).status, 204);
+    assert.deepEqual((await history.listDigestEligible(now)).map(({ question }) => question), [
+      "Newer question"
+    ]);
+  } finally {
+    close();
+  }
+});
+
+test("verified Resend delivery callback deletes its digest and duplicate callback is harmless", async () => {
+  const { database, close } = createSqliteHistoryBinding();
+  const history = createConversationHistory(database);
+  const now = Date.now();
+  try {
+    await history.recordExchange({
+      conversationId: "b22bb6b5-cac3-4d0e-9f5f-90fcdcbfca32",
+      question: "Question",
+      answer: "Answer",
+      createdAt: now - 1_000
+    });
+    const digest = await history.claimNextDigest(now);
+    await history.recordDigestAttempt({
+      digestId: digest.digestId,
+      providerMessageId: "resend-email-1",
+      attemptedAt: now
+    });
+    const body = JSON.stringify({
+      type: "email.delivered",
+      data: { email_id: "resend-email-1" }
+    });
+    const headers = await signedWebhookHeaders(body);
+    const makeWebhookRequest = () => new Request("https://worker.test/webhooks/resend", {
+      method: "POST",
+      headers,
+      body
+    });
+    const { env } = createEnvironment({
+      CONVERSATION_HISTORY: database,
+      RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET
+    });
+
+    assert.equal((await worker.fetch(makeWebhookRequest(), env)).status, 204);
+    assert.equal((await worker.fetch(makeWebhookRequest(), env)).status, 204);
+    assert.equal((await history.listDigestEligible(now)).length, 0);
+  } finally {
+    close();
+  }
+});
+
+test("invalid Resend webhook signature cannot delete history", async () => {
+  const { env, calls } = createEnvironment({ RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET });
+  const response = await worker.fetch(makeRequest({
+    path: "/webhooks/resend",
+    body: JSON.stringify({ type: "email.delivered", data: { email_id: "resend-email-1" } })
+  }), env);
+
+  assert.equal(response.status, 401);
+  assert.equal(calls.historyStatements.length, 0);
+});
+
+test("verified delivery for an unknown email is acknowledged without deleting history", async () => {
+  const { env, calls } = createEnvironment({ RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET });
+  const body = JSON.stringify({
+    type: "email.delivered",
+    data: { email_id: "unknown-email" }
+  });
+  const response = await worker.fetch(new Request("https://worker.test/webhooks/resend", {
+    method: "POST",
+    headers: await signedWebhookHeaders(body),
+    body
+  }), env);
+
+  assert.equal(response.status, 204);
+  assert.ok(!calls.historyStatements.some(({ sql }) => /DELETE|UPDATE/i.test(sql)));
+});
+
+test("verified email.sent event does not delete Conversation History", async () => {
+  const { env, calls } = createEnvironment({ RESEND_WEBHOOK_SECRET: TEST_WEBHOOK_SECRET });
+  const body = JSON.stringify({
+    type: "email.sent",
+    data: { email_id: "resend-email-1" }
+  });
+  const response = await worker.fetch(new Request("https://worker.test/webhooks/resend", {
+    method: "POST",
+    headers: await signedWebhookHeaders(body),
+    body
+  }), env);
+
+  assert.equal(response.status, 204);
+  assert.equal(calls.historyStatements.length, 0);
+});
+
 test("hourly scheduled handler deletes exchanges at or past expiry", async () => {
   const { env, calls } = createEnvironment();
   assert.equal(typeof worker.scheduled, "function");
 
   await worker.scheduled({ cron: "0 * * * *", scheduledTime: Date.now() }, env);
 
-  assert.equal(calls.historyStatements.length, 1);
+  assert.equal(calls.historyStatements.length, 2);
   assert.match(calls.historyStatements[0].sql, /DELETE FROM conversation_exchanges/i);
   assert.match(calls.historyStatements[0].sql, /expires_at\s*<=\s*\?/i);
 });

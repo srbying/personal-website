@@ -1,10 +1,59 @@
 import { loadWorkerConfig } from "./config.js";
 import { answerChat } from "./chat/service.js";
 import { createConversationHistory } from "./chat/history.js";
+import { isDigestDeliveryWindow, sendDailyChatDigest } from "./chat/digest.js";
+import { createResendProvider } from "./email/resend.js";
 import { validateChatRequest } from "./chat/messages.js";
-import { jsonResponse, readBoundedJson } from "./utils/http.js";
+import { jsonResponse, readBoundedJson, readBoundedText } from "./utils/http.js";
 
 const HISTORY_RETENTION_CRON = "0 * * * *";
+const RESEND_WEBHOOK_PATH = "/webhooks/resend";
+const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
+
+async function handleResendWebhook(request, env) {
+  if (request.method !== "POST") {
+    return jsonResponse({ error: "method_not_allowed" }, 405);
+  }
+  if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get("content-type") ?? "")) {
+    return jsonResponse({ error: "unsupported_media_type" }, 415);
+  }
+
+  const parsed = await readBoundedText(request, MAX_WEBHOOK_BODY_BYTES);
+  if (parsed.error) return jsonResponse({ error: parsed.error }, parsed.status);
+
+  const provider = createResendProvider({ webhookSecret: env.RESEND_WEBHOOK_SECRET });
+  let event;
+  try {
+    event = await provider.parseDeliveryEvent({
+      rawBody: parsed.text,
+      headers: request.headers
+    });
+  } catch {
+    return jsonResponse({ error: "invalid_webhook" }, 401);
+  }
+  if (!event) return jsonResponse({}, 204);
+
+  try {
+    const history = createConversationHistory(env.CONVERSATION_HISTORY);
+    const digestId = event.digestId ??
+      await history.findDigestIdByProviderMessageId(event.providerMessageId);
+    if (!digestId) return jsonResponse({}, 204);
+    await history.confirmDigestDelivered(digestId);
+    return jsonResponse({}, 204);
+  } catch {
+    return jsonResponse({ error: "assistant_unavailable" }, 503);
+  }
+}
+
+function digestProvider(env) {
+  if (env.DIGEST_PROVIDER) return env.DIGEST_PROVIDER;
+  return createResendProvider({
+    apiKey: env.RESEND_API_KEY,
+    from: env.RESEND_FROM,
+    to: env.DIGEST_RECIPIENT,
+    webhookSecret: env.RESEND_WEBHOOK_SECRET
+  });
+}
 
 function createChatDependencies(env, config, request) {
   return {
@@ -26,6 +75,8 @@ function createChatDependencies(env, config, request) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === RESEND_WEBHOOK_PATH) return handleResendWebhook(request, env);
+
     const origin = request.headers.get("origin");
     let config;
     try {
@@ -93,6 +144,14 @@ export default {
 
   async scheduled(controller, env) {
     if (controller.cron !== HISTORY_RETENTION_CRON) return;
-    await createConversationHistory(env.CONVERSATION_HISTORY).deleteExpired();
+    const scheduledTime = controller.scheduledTime ?? Date.now();
+    const history = createConversationHistory(env.CONVERSATION_HISTORY);
+    await history.deleteExpired(scheduledTime);
+    if (!isDigestDeliveryWindow(scheduledTime)) return;
+    await sendDailyChatDigest({
+      history,
+      provider: digestProvider(env),
+      scheduledTime
+    });
   }
 };

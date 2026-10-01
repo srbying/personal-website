@@ -12,12 +12,14 @@ A personal portfolio website focused on presenting my resume, experience, select
 - `npm run test:acceptance` checks the launch shell acceptance criteria.
 - `npm run test:assets` checks the launch asset manifest and public asset paths.
 - `npm run test:knowledge` checks the local approved-note sync workflow and its adapters.
-- `npm run test:worker` checks Worker request handling.
+- `npm run test:worker` checks Worker requests, digest scheduling, delivery, and retention.
 - `npm run test:portfolio-chat` checks browser chat message limits.
 
 ## Portfolio chat
 
 The Cloudflare backend lives in `workers/steven-assistant/`. Its chat endpoint validates bounded conversations, retrieves approved evidence, and keeps the fixed role-only response policy. Conversation history is not part of the knowledge sync workflow. The public homepage wording and approved evidence remain subject to Steven's approval before production.
+
+The Worker sends private chat digests during the 8 a.m. `America/New_York` hour. Resend is a candidate provider behind a server-side adapter; sending requires `RESEND_API_KEY`, `RESEND_FROM`, `DIGEST_RECIPIENT`, and `RESEND_WEBHOOK_SECRET`. Its delivery webhook posts to `/webhooks/resend`; only verified `email.delivered` events retire included exchanges. Configure sender details and production secrets only after reviewing provider terms, delivery events, and free-tier eligibility. The public chat API does not expose these settings or transcript access.
 
 ## Local knowledge maintenance
 
