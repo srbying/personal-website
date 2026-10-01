@@ -9,6 +9,21 @@ import { jsonResponse, readBoundedJson, readBoundedText } from "./utils/http.js"
 const HISTORY_RETENTION_CRON = "0 * * * *";
 const RESEND_WEBHOOK_PATH = "/webhooks/resend";
 const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
+const VERCEL_PREVIEW_HOST = /^personal-website-[a-z0-9-]+-srbyington-6585s-projects\.vercel\.app$/;
+
+function isVercelPreviewOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return url.protocol === "https:" &&
+      url.origin === origin &&
+      !url.port &&
+      !url.username &&
+      !url.password &&
+      VERCEL_PREVIEW_HOST.test(url.hostname);
+  } catch {
+    return false;
+  }
+}
 
 async function handleResendWebhook(request, env) {
   if (request.method !== "POST") {
@@ -85,8 +100,11 @@ export default {
       return jsonResponse({ error: "assistant_unavailable" }, 503);
     }
 
-    const options = { origin, allowedOrigins: config.allowedOrigins };
-    if (origin && !config.allowedOrigins.has(origin)) {
+    const allowedOrigins = new Set(config.allowedOrigins);
+    if (origin && isVercelPreviewOrigin(origin)) allowedOrigins.add(origin);
+
+    const options = { origin, allowedOrigins };
+    if (origin && !allowedOrigins.has(origin)) {
       return jsonResponse({ error: "origin_not_allowed" }, 403);
     }
     if (request.method === "OPTIONS") return jsonResponse({}, 204, options);
