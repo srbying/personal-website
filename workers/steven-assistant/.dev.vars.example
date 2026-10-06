@@ -1,0 +1,16 @@
+# Copy to .dev.vars and fill required local values. Never commit .dev.vars.
+EMBEDDING_MODEL="replace-with-approved-workers-ai-model"
+EMBEDDING_DIMENSIONS="replace-with-vector-dimensions"
+VECTOR_TOP_K="replace-with-vector-result-count"
+MAX_MESSAGES="replace-with-message-count-limit"
+MAX_MESSAGE_LENGTH="replace-with-per-message-character-limit"
+MAX_TOTAL_MESSAGE_LENGTH="replace-with-total-character-limit"
+MAX_BODY_BYTES="replace-with-request-byte-limit"
+RELEVANCE_THRESHOLD="replace-with-vector-score-threshold"
+ALLOWED_ORIGINS_JSON='["replace-with-approved-origin"]'
+KNOWLEDGE_DIR="replace-with-absolute-path-outside-repository"
+# Candidate digest provider; uncomment and configure only after readiness review.
+# RESEND_API_KEY="replace-with-server-side-resend-api-key"
+# RESEND_WEBHOOK_SECRET="replace-with-resend-webhook-signing-secret"
+# RESEND_FROM="replace-with-verified-sender-address"
+# DIGEST_RECIPIENT="replace-with-digest-recipient-address"

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { heroLandscape, resumePdf } from "../data/launchAssets";
+import PortfolioChat from "../components/PortfolioChat.astro";
+import { resumePdf } from "../data/launchAssets";
 import {
   closingCtas,
   homeHero,
@@ -10,7 +11,7 @@ import {
 } from "../data/home";
 import { structuredIdentityMetadata } from "../data/site";
 
-function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
+function getHomeCtaAnalytics(cta: HomeCta, location: "home_hero" | "home_close") {
   if (cta.href === resumePdf.path) {
     return { event: "resume_download", location, target: "resume_pdf" };
   }
@@ -25,6 +26,12 @@ function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
 
   return undefined;
 }
+
+const heroCtas = [...homeHero.ctas].sort((left, right) => {
+  if (left.href === "/experience/") return -1;
+  if (right.href === "/experience/") return 1;
+  return 0;
+});
 ---
 
 <BaseLayout
@@ -33,26 +40,127 @@ function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
   canonicalPath="/"
   structuredData={structuredIdentityMetadata}
 >
-  <section class="hero-section">
-    <picture class="hero-section__media">
-      <source srcset={heroLandscape.path} type="image/webp" />
+  <section class="fieldbook-hero" aria-labelledby="home-title">
+    <ol class="fieldbook-ruler" aria-hidden="true">
+      {Array.from({ length: 11 }, (_, index) => (
+        <li><span>{String(index).padStart(2, "0")}</span></li>
+      ))}
+    </ol>
+
+    <p class="fieldbook-meta">{homeHero.metadata}</p>
+
+    <h1 class="fieldbook-title" id="home-title">
+      {homeHero.headline.split(" ").map((word) => <span>{word}</span>)}
+    </h1>
+
+    <p class="fieldbook-intro">{homeHero.supportingLine}</p>
+
+    <div class="fieldbook-actions" aria-label="Portfolio actions">
+      {
+        heroCtas.map((cta, index) => (
+          <a
+            class:list={[
+              "fieldbook-action",
+              index === 0 && "fieldbook-action--primary"
+            ]}
+            href={cta.href}
+            download={cta.href === resumePdf.path ? true : undefined}
+            data-analytics-event={getHomeCtaAnalytics(cta, "home_hero")?.event}
+            data-analytics-location={getHomeCtaAnalytics(cta, "home_hero")?.location}
+            data-analytics-target={getHomeCtaAnalytics(cta, "home_hero")?.target}
+          >
+            <span>{cta.label}</span>
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 18">
+              <path d="M1 9h20m-7-7 7 7-7 7" />
+            </svg>
+          </a>
+        ))
+      }
+    </div>
+
+    <figure class="fieldbook-evidence" aria-labelledby="aeris-evidence-label">
       <img
-        src={heroLandscape.fallbackPath}
-        alt={heroLandscape.alt}
-        width={heroLandscape.width}
-        height={heroLandscape.height}
-        loading="eager"
+        class="fieldbook-evidence__plate"
+        src="/assets/plates/aeris-screenshot.png"
+        alt="Aeris chat response comparing running pace at similar heart rates."
+        width="1440"
+        height="1130"
+        fetchpriority="high"
         decoding="async"
       />
-    </picture>
-    <div class="hero-section__content">
-      <p class="hero-kicker">{homeHero.eyebrow}</p>
-      <h1>{homeHero.headline}</h1>
-      <p>{homeHero.supportingLine}</p>
-      <p class="hero-proof">{homeHero.metadata}</p>
-      <div class="hero-actions" aria-label="Primary links">
+      <img
+        class="fieldbook-evidence__mobile-shot"
+        src="/assets/projects/aeris/chat-response.png"
+        alt="Aeris chat response comparing running pace at similar heart rates."
+        width="2424"
+        height="1502"
+        loading="lazy"
+        decoding="async"
+      />
+      <div class="fieldbook-evidence__frame" aria-hidden="true"></div>
+      <figcaption class="fieldbook-evidence__labels">
+        <span class="fieldbook-evidence__label fieldbook-evidence__label--aeris" id="aeris-evidence-label">
+          AERIS / FITNESS ANALYTICS
+        </span>
+        <span class="fieldbook-evidence__label fieldbook-evidence__label--pace">
+          PACE AT SIMILAR HEART RATES
+        </span>
+      </figcaption>
+    </figure>
+
+    <div class="fieldbook-baseline" aria-hidden="true">
+      <span class="fieldbook-baseline__line"></span>
+      <span class="fieldbook-baseline__mark fieldbook-baseline__mark--left"></span>
+      <span class="fieldbook-baseline__mark fieldbook-baseline__mark--right"></span>
+      <span class="fieldbook-baseline__ratio">16:10</span>
+    </div>
+  </section>
+
+  <div class="fieldbook-content">
+    <section class="home-section recent-experience" aria-labelledby="recent-experience-heading">
+      <div class="section-heading">
+        <h2 id="recent-experience-heading">Teams, systems, and product work</h2>
+      </div>
+      <div class="recent-experience__rows">
         {
-          homeHero.ctas.map((cta) => (
+          recentExperience.map((item) => (
+            <article class="recent-experience__row">
+              <div>
+                <h3>{item.company}</h3>
+                <p>{item.role}</p>
+              </div>
+              <time>{item.dateRange}</time>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <PortfolioChat />
+
+    <section class="home-section leadership-section" aria-labelledby="leadership-heading">
+      <div class="section-heading">
+        <h2 id="leadership-heading">A practical operating style</h2>
+      </div>
+      <ol class="leadership-list">
+        {
+          leadershipPrinciples.map((principle) => (
+            <li>
+              <h3>{principle.title}</h3>
+              <p>{principle.sentence}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="home-close" aria-labelledby="home-close-heading">
+      <div>
+        <h2 id="home-close-heading">Want the concise version?</h2>
+      </div>
+      <div class="hero-actions home-close__actions" aria-label="Resume and contact links">
+        {
+          closingCtas.map((cta) => (
             <a
               class:list={[
                 "button-link",
@@ -60,78 +168,18 @@ function getHomeCtaAnalytics(cta: HomeCta, location: "hero" | "home_close") {
               ]}
               href={cta.href}
               download={cta.href === resumePdf.path ? true : undefined}
-              data-analytics-event={getHomeCtaAnalytics(cta, "hero")?.event}
-              data-analytics-location={getHomeCtaAnalytics(cta, "hero")?.location}
-              data-analytics-target={getHomeCtaAnalytics(cta, "hero")?.target}
+              data-analytics-event={getHomeCtaAnalytics(cta, "home_close")?.event}
+              data-analytics-location={getHomeCtaAnalytics(cta, "home_close")?.location}
+              data-analytics-target={getHomeCtaAnalytics(cta, "home_close")?.target}
             >
-              {cta.label}
+              <span>{cta.label}</span>
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 18">
+                <path d="M1 9h20m-7-7 7 7-7 7" />
+              </svg>
             </a>
           ))
         }
       </div>
-    </div>
-  </section>
-
-  <section class="home-section recent-experience" aria-labelledby="recent-experience-heading">
-    <div class="section-heading">
-      <p class="section-kicker">Recent Experience</p>
-      <h2 id="recent-experience-heading">Teams, systems, and product work</h2>
-    </div>
-    <div class="recent-experience__rows">
-      {
-        recentExperience.map((item) => (
-          <article class="recent-experience__row">
-            <div>
-              <h3>{item.company}</h3>
-              <p>{item.role}</p>
-            </div>
-            <time>{item.dateRange}</time>
-          </article>
-        ))
-      }
-    </div>
-  </section>
-
-  <section class="home-section leadership-section" aria-labelledby="leadership-heading">
-    <div class="section-heading">
-      <p class="section-kicker">How I Lead</p>
-      <h2 id="leadership-heading">A practical operating style</h2>
-    </div>
-    <ol class="leadership-list">
-      {
-        leadershipPrinciples.map((principle) => (
-          <li>
-            <h3>{principle.title}</h3>
-            <p>{principle.sentence}</p>
-          </li>
-        ))
-      }
-    </ol>
-  </section>
-
-  <section class="home-close" aria-labelledby="home-close-heading">
-    <div>
-      <p class="section-kicker">Resume and contact</p>
-      <h2 id="home-close-heading">Want the concise version?</h2>
-    </div>
-    <div class="hero-actions home-close__actions" aria-label="Resume and contact links">
-      {
-        closingCtas.map((cta) => (
-          <a
-            class:list={[
-              "button-link",
-              cta.variant === "primary" && "button-link--primary"
-            ]}
-            href={cta.href}
-            download={cta.href === resumePdf.path ? true : undefined}
-            data-analytics-event={getHomeCtaAnalytics(cta, "home_close")?.event}
-            data-analytics-location={getHomeCtaAnalytics(cta, "home_close")?.location}
-            data-analytics-target={getHomeCtaAnalytics(cta, "home_close")?.target}
-          >
-            {cta.label}
-          </a>
-        ))
-      }
-    </div>
-  </section>
+    </section>
+  </div>
 </BaseLayout>

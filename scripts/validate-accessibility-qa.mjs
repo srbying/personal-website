@@ -76,6 +76,10 @@ function assertHeadingOrder(filePath, source) {
   assert(headings.length > 0, `${filePath} must include at least one heading`);
   assert(headings[0] === "h1", `${filePath} must start heading order with h1`);
   assert(
+    headings.filter((heading) => heading === "h1").length === 1,
+    `${filePath} must include exactly one h1`
+  );
+  assert(
     headings.every((heading, index) => {
       if (index === 0) {
         return true;
@@ -122,13 +126,14 @@ function assertContrast() {
   }
 }
 
-const [packageJsonSource, layout, navigation, styles, launchAssets, ...pageSources] =
+const [packageJsonSource, layout, navigation, styles, launchAssets, portfolioChat, ...pageSources] =
   await Promise.all([
     readProjectFile("package.json"),
     readProjectFile("src/layouts/BaseLayout.astro"),
     readProjectFile("src/components/LaunchNavigation.astro"),
     readProjectFile("src/styles/global.css"),
     readProjectFile("src/data/launchAssets.ts"),
+    readProjectFile("src/components/PortfolioChat.astro"),
     ...pages.map(readProjectFile)
   ]);
 
@@ -196,8 +201,15 @@ assert(!launchAssets.includes('reviewStatus: "pending"'), "Expected all launch a
 
 for (const [index, filePath] of pages.entries()) {
   const source = pageSources[index];
+  const composedSource = filePath === "src/pages/index.astro"
+    ? source.replace("<PortfolioChat />", portfolioChat)
+    : source;
 
-  assertHeadingOrder(filePath, source);
+  if (filePath === "src/pages/index.astro") {
+    assert(composedSource !== source, "Expected homepage to include PortfolioChat at its component invocation");
+  }
+
+  assertHeadingOrder(filePath, composedSource);
 }
 
 for (const source of pageSources) {

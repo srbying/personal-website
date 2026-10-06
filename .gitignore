@@ -8,3 +8,22 @@ CONTEXT.md
 dist/
 node_modules/
 .vercel
+.impeccable/
+
+# Private chatbot content, local planning, and sync artifacts
+/src/content/knowledge/
+/knowledge/
+/.knowledge/
+/docs/private/
+/docs/chatbot-plan.md
+
+# Local credentials; only a placeholder example may be committed
+.env
+.env.*
+!.env.example
+
+# Wrangler local state and local Worker secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
