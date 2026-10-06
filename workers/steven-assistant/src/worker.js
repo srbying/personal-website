@@ -1,5 +1,6 @@
 import { loadWorkerConfig } from "./config.js";
 import { answerChat } from "./chat/service.js";
+import { ANSWER_SYSTEM_PROMPT } from "./chat/policy.js";
 import { createConversationHistory } from "./chat/history.js";
 import { isDigestDeliveryWindow, sendDailyChatDigest } from "./chat/digest.js";
 import { createResendProvider } from "./email/resend.js";
@@ -9,6 +10,7 @@ import { jsonResponse, readBoundedJson, readBoundedText } from "./utils/http.js"
 const HISTORY_RETENTION_CRON = "0 * * * *";
 const RESEND_WEBHOOK_PATH = "/webhooks/resend";
 const MAX_WEBHOOK_BODY_BYTES = 64 * 1024;
+const ANSWER_MODEL = "@cf/meta/llama-3.2-3b-instruct";
 const VERCEL_PREVIEW_HOST = /^personal-website-[a-z0-9-]+-srbyington-6585s-projects\.vercel\.app$/;
 
 function isVercelPreviewOrigin(origin) {
@@ -79,6 +81,17 @@ function createChatDependencies(env, config, request) {
     embedQuery: async (query) => {
       const result = await env.AI.run(config.embeddingModel, { text: [query] });
       return result?.data?.[0];
+    },
+    generateAnswer: async ({ question, evidence }) => {
+      const result = await env.AI.run(ANSWER_MODEL, {
+        messages: [
+          { role: "system", content: ANSWER_SYSTEM_PROMPT },
+          { role: "user", content: JSON.stringify({ question, evidence }) }
+        ],
+        max_tokens: 256,
+        temperature: 0.2
+      });
+      return result?.response;
     },
     searchEvidence: (vector) => env.KNOWLEDGE.query(vector, {
       topK: config.vectorTopK,

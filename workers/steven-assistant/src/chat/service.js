@@ -1,11 +1,17 @@
-import { buildRetrievalQuery, getPreviousUserQuestions } from "./messages.js";
-import { ANSWERS, APPROVED_EVIDENCE, classifyQuestion } from "./policy.js";
+import { buildRetrievalQuery } from "./messages.js";
+import { ANSWERS, isNegativeFitQuestion } from "./policy.js";
 
 function result(status, body) {
   return { status, body };
 }
 
-export async function answerChat(messages, { config, checkRateLimit, embedQuery, searchEvidence }) {
+export async function answerChat(messages, {
+  config,
+  checkRateLimit,
+  embedQuery,
+  searchEvidence,
+  generateAnswer
+}) {
   const rateLimit = await checkRateLimit();
   if (!rateLimit || typeof rateLimit.success !== "boolean") {
     throw new Error("Chat rate limiter unavailable");
@@ -15,14 +21,8 @@ export async function answerChat(messages, { config, checkRateLimit, embedQuery,
   }
 
   const latestQuestion = messages.at(-1).content.trim();
-  const earlierQuestions = getPreviousUserQuestions(messages);
-  const intent = classifyQuestion(latestQuestion, earlierQuestions);
-
-  if (intent === "negative-fit") {
+  if (isNegativeFitQuestion(latestQuestion)) {
     return result(200, { status: "answered", answer: ANSWERS.strengthsFocus });
-  }
-  if (intent === "unsupported") {
-    return result(200, { status: "insufficient", answer: ANSWERS.missing });
   }
 
   const vector = await embedQuery(buildRetrievalQuery(messages));
@@ -47,14 +47,24 @@ export async function answerChat(messages, { config, checkRateLimit, embedQuery,
     throw new Error("Assistant retrieval unavailable");
   }
 
-  const approvedMatch = matches.find((match) =>
-    match?.metadata?.text === APPROVED_EVIDENCE &&
-    match.score >= config.relevanceThreshold
-  );
-  if (!approvedMatch) {
+  const evidence = matches
+    .filter((match) => match.score >= config.relevanceThreshold)
+    .map((match) => match.metadata.text);
+  if (!evidence.length) {
     return result(200, { status: "insufficient", answer: ANSWERS.missing });
   }
 
-  // Return only fixed policy text; visitor input and vector metadata add no claims.
-  return result(200, { status: "answered", answer: ANSWERS.role });
+  const answer = await generateAnswer({
+    question: latestQuestion,
+    evidence: evidence.slice(0, config.vectorTopK)
+  });
+  if (typeof answer !== "string" || !answer.trim() || answer.length > 2000) {
+    throw new Error("Assistant answer generation unavailable");
+  }
+
+  const trimmedAnswer = answer.trim();
+  return result(200, {
+    status: trimmedAnswer === ANSWERS.missing ? "insufficient" : "answered",
+    answer: trimmedAnswer
+  });
 }

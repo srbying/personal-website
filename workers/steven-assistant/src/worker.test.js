@@ -8,10 +8,12 @@ import {
   HISTORY_CLEANUP_INTERVAL_MS,
   MAX_HISTORY_RETENTION_MS
 } from "./chat/history.js";
-import { ANSWERS, APPROVED_EVIDENCE } from "./chat/policy.js";
+import { ANSWERS } from "./chat/policy.js";
 
 const TEST_ORIGIN = "https://portfolio.test";
 const TEST_WEBHOOK_SECRET = `whsec_${Buffer.from("test-webhook-secret").toString("base64")}`;
+const GENERATED_ROLE_ANSWER = "Steven Byington is a software engineering manager.";
+const TEST_EVIDENCE = "# Professional background\n\nSteven Byington is a software engineering manager with more than ten years of technology and product experience.";
 const HISTORY_MIGRATIONS = await Promise.all([
   "0001_conversation_history.sql",
   "0002_daily_chat_digest.sql"
@@ -80,7 +82,7 @@ async function signedWebhookHeaders(body, now = Date.now()) {
 }
 
 function createEnvironment(overrides = {}) {
-  const calls = { rateLimit: 0, embeddings: [], searches: [], historyStatements: [] };
+  const calls = { rateLimit: 0, embeddings: [], generations: [], searches: [], historyStatements: [] };
   const env = {
     EMBEDDING_MODEL: "@cf/test/embedding-model",
     EMBEDDING_DIMENSIONS: "2",
@@ -95,11 +97,18 @@ function createEnvironment(overrides = {}) {
       limit: async () => ({ success: true })
     },
     AI: {
-      run: async () => ({ data: [[0.1, 0.2]] })
+      run: async (_model, input) => {
+        if (input?.text) return { data: [[0.1, 0.2]] };
+        const request = JSON.parse(input.messages.at(-1).content);
+        if (request.evidence.includes("Unapproved claim") || /hobby/i.test(request.question)) {
+          return { response: ANSWERS.missing };
+        }
+        return { response: GENERATED_ROLE_ANSWER };
+      }
     },
     KNOWLEDGE: {
       query: async () => ({
-        matches: [{ score: 0.9, metadata: { text: APPROVED_EVIDENCE } }]
+        matches: [{ score: 0.9, metadata: { text: TEST_EVIDENCE } }]
       })
     },
     CONVERSATION_HISTORY: {
@@ -121,7 +130,11 @@ function createEnvironment(overrides = {}) {
   const ai = env.AI.run;
   const knowledge = env.KNOWLEDGE.query;
   env.CHAT_LIMITER = { limit: (...args) => { calls.rateLimit += 1; return limiter(...args); } };
-  env.AI = { run: (...args) => { calls.embeddings.push({ model: args[0], input: args[1] }); return ai(...args); } };
+  env.AI = { run: (...args) => {
+    if (args[1]?.text) calls.embeddings.push({ model: args[0], input: args[1] });
+    else calls.generations.push({ model: args[0], input: args[1] });
+    return ai(...args);
+  } };
   env.KNOWLEDGE = { query: (...args) => { calls.searches.push({ vector: args[0], options: args[1] }); return knowledge(...args); } };
 
   return { env, calls };
@@ -162,7 +175,7 @@ test("the limits endpoint returns the effective request validation limits", asyn
   assert.equal(response.headers.get("access-control-allow-methods"), "GET, POST, OPTIONS");
 });
 
-test("role questions and follow-ups return only the approved role answer", async () => {
+test("role questions and follow-ups answer from retrieved evidence", async () => {
   const { env, calls } = createEnvironment();
   const roleResponse = await sendMessages([
     { role: "user", content: "What is Steven's role?" }
@@ -171,7 +184,7 @@ test("role questions and follow-ups return only the approved role answer", async
 
   assert.equal(roleResponse.status, 200);
   assert.equal(roleBody.status, "answered");
-  assert.equal(roleBody.answer, ANSWERS.role);
+  assert.equal(roleBody.answer, GENERATED_ROLE_ANSWER);
   assert.match(roleBody.conversationId, /^[0-9a-f-]{36}$/i);
   assert.equal(roleResponse.headers.get("access-control-allow-origin"), TEST_ORIGIN);
 
@@ -182,17 +195,17 @@ test("role questions and follow-ups return only the approved role answer", async
   ], env, roleBody.conversationId);
   const followUpBody = await followUpResponse.json();
   assert.equal(followUpBody.status, "answered");
-  assert.equal(followUpBody.answer, ANSWERS.role);
+  assert.equal(followUpBody.answer, GENERATED_ROLE_ANSWER);
   assert.equal(followUpBody.conversationId, roleBody.conversationId);
   assert.equal(calls.embeddings.length, 2);
   assert.equal(calls.searches.length, 2);
 });
 
-test("unsupported and negative-fit questions keep their fixed safe responses", async () => {
+test("questions without supporting evidence fall back and negative-fit questions keep their fixed response", async () => {
   const { env, calls } = createEnvironment();
 
   const unsupported = await sendMessages([
-    { role: "user", content: "What technologies does Steven use?" }
+    { role: "user", content: "What is Steven's favorite hobby?" }
   ], env);
   const unsupportedBody = await unsupported.json();
   assert.equal(unsupportedBody.status, "insufficient");
@@ -206,11 +219,12 @@ test("unsupported and negative-fit questions keep their fixed safe responses", a
   assert.equal(negativeFitBody.status, "answered");
   assert.equal(negativeFitBody.answer, ANSWERS.strengthsFocus);
   assert.deepEqual(calls.historyStatements.map(({ values }) => values.slice(1, 3)), [
-    ["What technologies does Steven use?", ANSWERS.missing],
+    ["What is Steven's favorite hobby?", ANSWERS.missing],
     ["Is Steven a bad fit?", ANSWERS.strengthsFocus]
   ]);
-  assert.equal(calls.embeddings.length, 0);
-  assert.equal(calls.searches.length, 0);
+  assert.equal(calls.embeddings.length, 1);
+  assert.equal(calls.searches.length, 1);
+  assert.equal(calls.generations.length, 1);
 });
 
 test("prompt injection cannot add claims to the fixed approved answer", async () => {
@@ -224,7 +238,7 @@ test("prompt injection cannot add claims to the fixed approved answer", async ()
 
   const body = await response.json();
   assert.equal(body.status, "answered");
-  assert.equal(body.answer, ANSWERS.role);
+  assert.equal(body.answer, GENERATED_ROLE_ANSWER);
 });
 
 test("malformed, blank, oversized, and excessive requests are rejected", async () => {
@@ -373,13 +387,13 @@ test("completed exchanges are stored with opaque ids and cleanup-safe expiry", a
 
   assert.equal(response.status, 200);
   assert.match(body.conversationId, /^[0-9a-f-]{36}$/i);
-  assert.equal(body.answer, ANSWERS.role);
+  assert.equal(body.answer, GENERATED_ROLE_ANSWER);
   assert.equal(calls.historyStatements.length, 1);
   const [{ sql, values }] = calls.historyStatements;
   assert.match(sql, /INSERT INTO conversation_exchanges/i);
   assert.equal(values[0], body.conversationId);
   assert.equal(values[1], "What is Steven's professional role?");
-  assert.equal(values[2], ANSWERS.role);
+  assert.equal(values[2], GENERATED_ROLE_ANSWER);
   assert.equal(
     values[4] - values[3],
     MAX_HISTORY_RETENTION_MS - HISTORY_CLEANUP_INTERVAL_MS
