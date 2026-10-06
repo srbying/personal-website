@@ -8,6 +8,7 @@ CONTEXT.md
 dist/
 node_modules/
 .vercel
+.impeccable/
 
 # Private chatbot content, local planning, and sync artifacts
 /src/content/knowledge/

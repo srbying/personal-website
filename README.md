@@ -17,7 +17,7 @@ A personal portfolio website focused on presenting my resume, experience, select
 
 ## Portfolio chat
 
-The Cloudflare backend lives in `workers/steven-assistant/`. Its chat endpoint validates bounded conversations, retrieves approved evidence, and keeps the fixed role-only response policy. Conversation history is not part of the knowledge sync workflow. The public homepage wording and approved evidence remain subject to Steven's approval before production.
+The Cloudflare backend lives in `workers/steven-assistant/`. Its chat endpoint validates bounded conversations, retrieves approved evidence, and uses Workers AI to write concise answers grounded only in relevant passages. Questions with no sufficiently relevant evidence receive the fixed insufficient-information response; negative-fit questions receive a fixed response. Conversation history is not part of the knowledge sync workflow.
 
 The Worker sends private chat digests during the 8 a.m. `America/New_York` hour. Resend is a candidate provider behind a server-side adapter; sending requires `RESEND_API_KEY`, `RESEND_FROM`, `DIGEST_RECIPIENT`, and `RESEND_WEBHOOK_SECRET`. Its delivery webhook posts to `/webhooks/resend`; only verified `email.delivered` events retire included exchanges. Configure sender details and production secrets only after reviewing provider terms, delivery events, and free-tier eligibility. The public chat API does not expose these settings or transcript access.
 
