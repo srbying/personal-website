@@ -10,7 +10,7 @@
 		"DIGEST_RECIPIENT": "steven@stevenbyington.me",
 		"EMBEDDING_DIMENSIONS": "768",
 		"EMBEDDING_MODEL": "@cf/baai/bge-base-en-v1.5",
-		"MAX_BODY_BYTES": "3000",
+		"MAX_BODY_BYTES": "20000",
 		"MAX_MESSAGE_LENGTH": "1000",
 		"MAX_MESSAGES": "8",
 		"MAX_TOTAL_MESSAGE_LENGTH": "6000",

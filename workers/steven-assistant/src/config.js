@@ -92,6 +92,9 @@ export function loadWorkerConfig(env) {
   if (config.maxTotalMessageLength > config.maxMessages * config.maxMessageLength) {
     throw new Error("Invalid worker configuration");
   }
+  if (config.maxBodyBytes < config.maxTotalMessageLength * 3 + config.maxMessages * 64 + 128) {
+    throw new Error("Invalid worker configuration");
+  }
 
   return Object.freeze(config);
 }

@@ -76,6 +76,10 @@ function assertHeadingOrder(filePath, source) {
   assert(headings.length > 0, `${filePath} must include at least one heading`);
   assert(headings[0] === "h1", `${filePath} must start heading order with h1`);
   assert(
+    headings.filter((heading) => heading === "h1").length === 1,
+    `${filePath} must include exactly one h1`
+  );
+  assert(
     headings.every((heading, index) => {
       if (index === 0) {
         return true;
@@ -198,8 +202,12 @@ assert(!launchAssets.includes('reviewStatus: "pending"'), "Expected all launch a
 for (const [index, filePath] of pages.entries()) {
   const source = pageSources[index];
   const composedSource = filePath === "src/pages/index.astro"
-    ? `${portfolioChat}\n${source}`
+    ? source.replace("<PortfolioChat />", portfolioChat)
     : source;
+
+  if (filePath === "src/pages/index.astro") {
+    assert(composedSource !== source, "Expected homepage to include PortfolioChat at its component invocation");
+  }
 
   assertHeadingOrder(filePath, composedSource);
 }

@@ -32,7 +32,7 @@ const fallbackContactLinks = Object.values(contactLinks)
 <section class="portfolio-chat" aria-labelledby="portfolio-chat-title" data-portfolio-chat data-api-url={apiUrl}>
   <div class="portfolio-chat__intro">
     <p class="portfolio-chat__eyebrow">AI about Steven</p>
-    <h1 id="portfolio-chat-title">Ask about Steven</h1>
+    <h2 id="portfolio-chat-title">Ask about Steven</h2>
     <p class="portfolio-chat__description">
       A friendly AI guide to Steven's work and experience. If it doesn't have enough information to answer, it will say so.
     </p>
@@ -171,7 +171,10 @@ const fallbackContactLinks = Object.values(contactLinks)
     const chat = createPortfolioChat({
       apiUrl,
       onStateChange: (state) => {
-        if (state.appendQuestion && state.question) addMessage("user", state.question);
+        if (state.appendQuestion) {
+          if (state.question) addMessage("user", state.question);
+          input.value = "";
+        }
         if (state.answer) addMessage("assistant", state.answer);
         if (state.maxQuestionLength) input.maxLength = state.maxQuestionLength;
 
@@ -197,7 +200,6 @@ const fallbackContactLinks = Object.values(contactLinks)
     };
 
     const ask = (question: string) => {
-      input.value = "";
       void chat.ask(question).then(restoreFocus);
     };
 
@@ -255,7 +257,7 @@ const fallbackContactLinks = Object.values(contactLinks)
     text-transform: uppercase;
   }
 
-  .portfolio-chat__intro h1 {
+  .portfolio-chat__intro h2 {
     margin: 0;
     color: var(--color-accent-strong);
     font-size: clamp(2.35rem, 5.1vw, 4rem);
@@ -548,7 +550,7 @@ const fallbackContactLinks = Object.values(contactLinks)
       padding: 0;
     }
 
-    .portfolio-chat__intro h1 {
+    .portfolio-chat__intro h2 {
       font-size: clamp(2.15rem, 7vw, 3.25rem);
     }
 

@@ -90,7 +90,7 @@ function createEnvironment(overrides = {}) {
     MAX_MESSAGES: "4",
     MAX_MESSAGE_LENGTH: "80",
     MAX_TOTAL_MESSAGE_LENGTH: "200",
-    MAX_BODY_BYTES: "512",
+    MAX_BODY_BYTES: "1024",
     RELEVANCE_THRESHOLD: "0.5",
     ALLOWED_ORIGINS_JSON: JSON.stringify([TEST_ORIGIN]),
     CHAT_LIMITER: {
@@ -272,7 +272,7 @@ test("malformed, blank, oversized, and excessive requests are rejected", async (
   assert.equal(tooMuchTotal.status, 400);
 
   const oversized = await worker.fetch(
-    makeRequest({ body: JSON.stringify({ messages: [{ role: "user", content: "x".repeat(600) }] }) }),
+    makeRequest({ body: JSON.stringify({ messages: [{ role: "user", content: "x".repeat(1100) }] }) }),
     env
   );
   assert.equal(oversized.status, 413);
@@ -288,6 +288,36 @@ test("missing or invalid runtime configuration fails closed", async () => {
   const invalid = await worker.fetch(makeRequest({ body: "{}" }), env);
   assert.equal(invalid.status, 503);
   assert.deepEqual(await invalid.json(), { error: "assistant_unavailable" });
+
+  const undersizedBodyLimit = createEnvironment({ MAX_BODY_BYTES: "983" });
+  const undersizedBodyLimitResponse = await worker.fetch(
+    makeRequest({ body: "{}" }),
+    undersizedBodyLimit.env
+  );
+  assert.equal(undersizedBodyLimitResponse.status, 503);
+  assert.deepEqual(await undersizedBodyLimitResponse.json(), { error: "assistant_unavailable" });
+});
+
+test("generated answers are trimmed and capped to the configured message length", async () => {
+  const { env } = createEnvironment({
+    MAX_MESSAGE_LENGTH: "24",
+    MAX_TOTAL_MESSAGE_LENGTH: "96",
+    MAX_BODY_BYTES: "672",
+    AI: {
+      run: async (_model, input) => input?.text
+        ? { data: [[0.1, 0.2]] }
+        : { response: `  ${"a".repeat(40)}  ` }
+    }
+  });
+  const response = await sendMessages([
+    { role: "user", content: "What is Steven's role?" }
+  ], env);
+  const body = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(body.status, "answered");
+  assert.equal(body.answer, "a".repeat(24));
+  assert.match(body.conversationId, /^[0-9a-f-]{36}$/i);
 });
 
 test("rate limiting and unapproved retrieval matches cannot produce an answer", async () => {
@@ -731,7 +761,7 @@ test("hourly scheduled handler deletes exchanges at or past expiry", async () =>
   const { env, calls } = createEnvironment();
   assert.equal(typeof worker.scheduled, "function");
 
-  await worker.scheduled({ cron: "0 * * * *", scheduledTime: Date.now() }, env);
+  await worker.scheduled({ cron: "0 * * * *", scheduledTime: Date.UTC(2026, 0, 1, 18) }, env);
 
   assert.equal(calls.historyStatements.length, 2);
   assert.match(calls.historyStatements[0].sql, /DELETE FROM conversation_exchanges/i);

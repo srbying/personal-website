@@ -65,6 +65,6 @@ export async function answerChat(messages, {
   const trimmedAnswer = answer.trim();
   return result(200, {
     status: trimmedAnswer === ANSWERS.missing ? "insufficient" : "answered",
-    answer: trimmedAnswer
+    answer: trimmedAnswer.slice(0, config.maxMessageLength)
   });
 }
